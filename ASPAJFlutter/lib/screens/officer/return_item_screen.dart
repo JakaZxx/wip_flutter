@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import '../models/borrowing_item.dart';
-import '../providers/borrowing_provider.dart';
+import '../../models/borrowing_item.dart';
+import '../../providers/borrowing_provider.dart';
 
 class ReturnItemScreen extends StatefulWidget {
   final BorrowingItem item;

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
-import '../providers/commodity_provider.dart';
-import '../providers/auth_provider.dart'; // Added this import
-import '../providers/borrowing_provider.dart';
-import '../models/commodity.dart';
+import '../../providers/commodity_provider.dart';
+import '../../providers/auth_provider.dart'; // Added this import
+import '../../providers/borrowing_provider.dart';
+import '../../models/commodity.dart';
 import 'edit_asset_screen.dart';
 
 class AssetDetailScreen extends StatefulWidget {

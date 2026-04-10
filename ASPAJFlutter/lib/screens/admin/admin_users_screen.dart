@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/user_provider.dart';
-import '../providers/class_provider.dart';
-import '../models/user.dart';
-import '../widgets/create_user_form.dart';
+import '../../providers/user_provider.dart';
+import '../../providers/class_provider.dart';
+import '../../models/user.dart';
+import '../../widgets/create_user_form.dart';
 
 class AdminUsersScreen extends StatefulWidget {
   const AdminUsersScreen({super.key});
