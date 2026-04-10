@@ -2,9 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../providers/borrowing_provider.dart';
-import '../../providers/auth_provider.dart';
-import '../../models/borrowing_item.dart';
+import '../providers/borrowing_provider.dart';
+import '../providers/auth_provider.dart';
+import '../models/borrowing_item.dart';
 
 class CreateBorrowingFormScreen extends StatefulWidget {
   const CreateBorrowingFormScreen({super.key});

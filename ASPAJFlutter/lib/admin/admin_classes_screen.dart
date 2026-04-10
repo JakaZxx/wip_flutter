@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/class_provider.dart';
-import '../../providers/auth_provider.dart';
-import '../../models/school_class.dart';
+import '../providers/class_provider.dart';
+import '../providers/auth_provider.dart';
+import '../models/school_class.dart';
 import 'admin_edit_class_screen.dart';
 
 class AdminClassesScreen extends StatefulWidget {

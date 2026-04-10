@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:math'; // Tambahkan ini
 import 'package:http/http.dart' as http; // Tambahkan ini
-import '../../models/borrowing.dart';
-import '../../models/borrowing_item.dart';
-import '../../services/api_service.dart';
+import '../models/borrowing.dart';
+import '../models/borrowing_item.dart';
+import '../services/api_service.dart';
 import 'return_item_screen.dart'; // We will create this screen next
 
 class BorrowingDetailScreen extends StatefulWidget {

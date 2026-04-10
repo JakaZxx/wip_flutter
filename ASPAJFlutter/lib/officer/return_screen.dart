@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import '../../providers/borrowing_provider.dart';
-import '../../providers/auth_provider.dart';
-import '../../models/borrowing.dart';
+import '../providers/borrowing_provider.dart';
+import '../providers/auth_provider.dart';
+import '../models/borrowing.dart';
 
 class ReturnScreen extends StatefulWidget {
   final Borrowing borrowing;
