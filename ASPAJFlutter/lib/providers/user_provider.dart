@@ -56,7 +56,7 @@ class UserProvider extends ChangeNotifier {
 
   Future<bool> updateUser(int userId, Map<String, dynamic> userData) async {
     try {
-      // TODO: Implement update user API call
+      await _apiService.updateUser(userId, userData);
       await fetchUsers();
       return true;
     } catch (e) {
@@ -68,7 +68,7 @@ class UserProvider extends ChangeNotifier {
 
   Future<bool> deleteUser(int userId) async {
     try {
-      // TODO: Implement delete user API call
+      await _apiService.deleteUser(userId);
       await fetchUsers();
       return true;
     } catch (e) {

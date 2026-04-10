@@ -14,10 +14,11 @@ import '../models/school_class.dart';
 import '../models/dashboard_stats.dart';
 
 class ApiService {
-  static const String baseUrl =
-      'http://192.168.1.3:8000/api'; // Update with your Laravel API URL (Android emulator)
-  static const String baseStorageUrl =
-      'http://192.168.1.3:8000'; // Base URL for storage (Android emulator)
+  // Note: Using 10.0.2.2 for Android Emulator, 127.0.0.1 for iOS, or your local machine IP
+  static const String _defaultIP = '192.168.1.3'; 
+  
+  static String get baseUrl => 'http://$_defaultIP:8000/api';
+  static String get baseStorageUrl => 'http://$_defaultIP:8000';
 
   static String? fixPhotoUrl(String? url) {
     if (url == null || url.isEmpty) return null;
@@ -1036,6 +1037,31 @@ class ApiService {
       }
     } else {
       throw Exception('Failed to submit bug report: ${response.body}');
+    }
+  }
+
+  // Update User
+  Future<void> updateUser(int userId, Map<String, dynamic> userData) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/users/$userId'),
+      headers: await _getHeaders(),
+      body: jsonEncode(userData),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update user: ${response.body}');
+    }
+  }
+
+  // Delete User
+  Future<void> deleteUser(int userId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/users/$userId'),
+      headers: await _getHeaders(),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete user: ${response.body}');
     }
   }
 }
