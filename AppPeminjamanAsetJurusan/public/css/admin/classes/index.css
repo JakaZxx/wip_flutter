@@ -1,0 +1,177 @@
+/* ====== Animasi Keyframes ====== */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ====== Container Card ====== */
+.wrapper {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 25px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    animation: fadeIn 0.5s ease;
+}
+
+/* ====== Title ====== */
+.wrapper h2 {
+    text-align: center;
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 25px;
+    color: #333;
+    animation: fadeIn 0.7s ease;
+}
+
+/* ====== Tombol Tambah / Import ====== */
+.btn-add {
+    display: inline-block;
+    padding: 10px 16px;
+    background: linear-gradient(90deg, #007bff, #0056b3);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    margin-bottom: 20px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.btn-add:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,123,255,0.4);
+}
+
+/* ====== Tabel ====== */
+.table-custom {
+    width: 100%;
+    border-collapse: collapse;
+}
+.table-custom thead {
+    background: #f8f9fa;
+}
+.table-custom th,
+.table-custom td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 2px solid #eee;
+    font-size: 15px;
+    color: #333;
+}
+.table-custom tbody tr {
+    transition: background 0.3s ease;
+}
+.table-custom tbody tr:hover {
+    background: #f0f8ff;
+}
+
+/* ====== Tombol Aksi ====== */
+.btn-action {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    color: #fff;
+}
+.btn-action:hover{
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+.btn-edit { background-color: #ffc107; }
+.btn-edit:hover { background-color: #e0a800; }
+.btn-delete { background-color: #dc3545; margin-left: 5px; }
+.btn-delete:hover { background-color: #b02a37; }
+
+/* ====== Import Classes Form ====== */
+#import-classes-form {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #dee2e6;
+    max-width: 800px;
+    display: none;
+}
+#import-classes-form.show {
+    display: block;
+    animation: slideDown 0.4s ease;
+}
+
+/* Pagination */
+.pagination a, .pagination span {
+    transition: all 0.3s ease;
+}
+.pagination a:hover {
+    transform: translateY(-2px);
+}
+
+/* ====== Responsive ====== */
+@media (max-width: 768px) {
+    .wrapper {
+        padding: 15px;
+        margin: 20px auto;
+    }
+
+    .wrapper h2 {
+        font-size: 22px;
+    }
+
+    .btn-add {
+        font-size: 14px;
+        padding: 8px 12px;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .table-custom th,
+    .table-custom td {
+        padding: 8px 10px;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    /* Hide Program Studi and Kapasitas columns on mobile */
+    .table-custom th:nth-child(4),
+    .table-custom td:nth-child(4),
+    .table-custom th:nth-child(5),
+    .table-custom td:nth-child(5) {
+        display: none;
+    }
+
+    .btn-action {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+
+    #import-classes-form {
+        padding: 15px;
+    }
+
+    #import-classes-form .mb-3 {
+        margin-bottom: 15px;
+    }
+
+    #import-classes-form button {
+        font-size: 14px;
+        padding: 8px 12px;
+        width: 100%;
+        margin-bottom: 5px;
+    }
+}

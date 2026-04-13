@@ -1,0 +1,25 @@
+# Laravel specific
+AppPeminjamanAsetJurusan/.env
+AppPeminjamanAsetJurusan/vendor/
+AppPeminjamanAsetJurusan/storage/*.key
+AppPeminjamanAsetJurusan/storage/framework/cache/data/*
+AppPeminjamanAsetJurusan/storage/framework/views/*.php
+AppPeminjamanAsetJurusan/storage/framework/sessions/*
+AppPeminjamanAsetJurusan/public/storage
+AppPeminjamanAsetJurusan/node_modules/
+
+# Flutter specific
+ASPAJFlutter/.dart_tool/
+ASPAJFlutter/.flutter-plugins
+ASPAJFlutter/.flutter-plugins-dependencies
+ASPAJFlutter/.pub-cache/
+ASPAJFlutter/.server/
+ASPAJFlutter/build/
+ASPAJFlutter/ios/Flutter/Generated.xcconfig
+ASPAJFlutter/android/local.properties
+
+# Misc
+.DS_Store
+.idea/
+.vscode/
+*.log

@@ -1,0 +1,21 @@
+
+   InvalidArgumentException 
+
+  Unexpected end of input
+
+  at C:\ASPAJFLUTTER\aspajflutter\AppPeminjamanAsetJurusan\vendor\psy\psysh\src\Shell.php:978
+    974▕ 
+    975▕         if (!$this->hasValidCode()) {
+    976▕             $this->popCodeStack();
+    977▕ 
+  ➜ 978▕             throw new \InvalidArgumentException('Unexpected end of input');
+    979▕         }
+    980▕     }
+    981▕ 
+    982▕     /**
+
+  1   C:\ASPAJFLUTTER\aspajflutter\AppPeminjamanAsetJurusan\vendor\psy\psysh\src\Shell.php:1511
+      Psy\Shell::setCode("'$user")
+
+  2   C:\ASPAJFLUTTER\aspajflutter\AppPeminjamanAsetJurusan\vendor\laravel\tinker\src\Console\TinkerCommand.php:76
+      Psy\Shell::execute("'$user")

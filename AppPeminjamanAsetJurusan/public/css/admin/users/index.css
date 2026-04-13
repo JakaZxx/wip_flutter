@@ -1,0 +1,191 @@
+.container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 25px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    animation: fadeIn 0.4s ease;
+}
+@keyframes fadeIn {
+    from {opacity: 0; transform: translateY(10px);}
+    to {opacity: 1; transform: translateY(0);}
+}
+.container h1 {
+    text-align: center;
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 25px;
+    color: #333;
+}
+.btn-primary {
+    display: inline-block;
+    padding: 10px 16px;
+    background: linear-gradient(90deg, #007bff, #0056b3);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    margin-bottom: 20px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+.btn-primary:hover {
+    background: linear-gradient(90deg, #0056b3, #004094);
+}
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+}
+.table th, .table td {
+    padding: 12px 15px;
+    text-align: left;
+    transition: background 0.2s ease;
+}
+.table thead {
+    background: #f5f5f5;
+    border-bottom: 2px solid #ddd;
+}
+.table tr {
+    border-bottom: 1px solid #eee;
+}
+.table tr:nth-child(even) {
+    background: #fafafa;
+}
+.table tr:hover {
+    background: #f0f8ff;
+}
+.btn-icon {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    color: #fff;
+}
+.btn-icon:hover {
+    filter: brightness(0.95);
+}
+.btn-edit {
+    background-color: #ffc107;
+}
+.btn-edit:hover {
+    background-color: #e0a800;
+}
+.btn-delete {
+    background-color: #dc3545;
+}
+.btn-delete:hover {
+    background-color: #b02a37;
+}
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+}
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 15px;
+    gap: 10px;
+}
+.entries-info {
+    font-size: 13px;
+    color: #555;
+}
+.pagination {
+    list-style: none;
+    display: flex;
+    gap: 4px;
+    padding: 0;
+    margin: 0;
+}
+.pagination li {
+    display: inline-block;
+}
+.pagination a,
+.pagination span {
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #333;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+.pagination a:hover {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+}
+.pagination .active span {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+}
+.pagination .disabled span {
+    color: #aaa;
+    background: #f9f9f9;
+    cursor: not-allowed;
+}
+@media (max-width: 768px) {
+    .search-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .search-form input,
+    .search-form select,
+    .search-form button {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    .table thead {
+        display: none;
+    }
+    .table, .table tbody, .table tr, .table td {
+        display: block;
+        width: 100%;
+    }
+    .table tr {
+        margin-bottom: 15px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .table td {
+        padding: 10px;
+        text-align: right;
+        position: relative;
+    }
+    .table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        font-weight: 600;
+        color: #555;
+        text-align: left;
+    }
+    .container-custom {
+        margin: 20px auto;
+        padding: 15px;
+    }
+    .table-custom th,
+    .table-custom td {
+        padding: 6px;
+        font-size: 12px;
+    }
+    .btn-square {width: 26px; height: 26px; font-size: 11px;}
+    .btn-add {padding: 8px 12px; font-size: 12px;}
+    .pagination-container {flex-direction: column; align-items: center;}
+    .filter-container {flex-direction: column; align-items: stretch;}
+}
