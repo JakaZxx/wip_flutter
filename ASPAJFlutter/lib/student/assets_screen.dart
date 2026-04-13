@@ -6,6 +6,7 @@ import '../providers/borrowing_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/commodity.dart';
 import '../screens/add_asset_screen.dart';
+import '../screens/edit_asset_screen.dart';
 import 'asset_detail_screen.dart';
 import '../theme/app_theme.dart';
 

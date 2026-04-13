@@ -1,5 +1,4 @@
 
-
 // Helper function to safely parse dynamic values to int.
 int? _parseInt(dynamic value) {
   if (value == null) return null;
@@ -48,8 +47,25 @@ class RecentRequest {
   }
 }
 
-   final int? rejectedBorrowingsCount;
+class DashboardStats {
+  final int? totalAssets;
+  final int? totalUsers;
+  final int? pendingUsersCount;
+  final int? totalBorrowings;
+  final ChartData? userGrowth;
+  final Map<String, dynamic>? assetDistribution;
+  final Map<String, dynamic>? assetStatus;
+  final int? activeBorrowingsCount;
+  final int? pendingRequestsCount;
+  final int? overdueBorrowingsCount;
+  final int? rejectedBorrowingsCount;
   final int? returnedBorrowingsCount;
+  final List<RecentRequest>? newRequests;
+  final int? totalAvailableAssets;
+  final int? myActiveBorrowingsCount;
+  final int? pendingBorrowingsCount;
+  final int? approvedOrOverdueBorrowingsCount;
+  final Map<String, dynamic>? upcomingDueBorrowing;
 
   DashboardStats({
     this.totalAssets,
