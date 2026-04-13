@@ -49,4 +49,6 @@ class Student {
   }
 
   String get schoolClassName => schoolClass?.name ?? '-';
+  String get email => user?.email ?? '-';
+  String get nis => user?.nis ?? '-';
 }

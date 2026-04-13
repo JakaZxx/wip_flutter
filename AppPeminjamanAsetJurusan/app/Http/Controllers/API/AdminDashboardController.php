@@ -61,13 +61,20 @@ class AdminDashboardController extends Controller
                 'data' => [
                     'total_users' => $totalUsers,
                     'total_assets' => $totalAssets,
-                    'pending_users' => $pendingUsersCount,
+                    'pending_users_count' => $pendingUsersCount,
                     'total_borrowings' => $totalBorrowings,
-                    'active_borrowings' => $activeBorrowings,
-                    'pending_approvals' => $pendingApprovals,
+                    'active_borrowings_count' => $activeBorrowings,
+                    'pending_approvals_count' => $pendingApprovals,
                     'asset_status' => $assetStatus,
                     'recent_users' => $recentUsers,
                     'recent_borrowings' => $recentBorrowings,
+                    // Placeholders for chart data if not yet implemented
+                    'user_growth' => [
+                        'labels' => [],
+                        'data' => [],
+                    ],
+                    'rejected_borrowings_count' => \App\Models\Borrowing::where('status', 'rejected')->count(),
+                    'returned_borrowings_count' => \App\Models\Borrowing::where('status', 'returned')->count(),
                 ]
             ]);
         } catch (\Exception $e) {

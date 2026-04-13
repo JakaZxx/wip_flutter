@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+
 
 // Helper function to safely parse dynamic values to int.
 int? _parseInt(dynamic value) {
@@ -48,30 +48,8 @@ class RecentRequest {
   }
 }
 
-class DashboardStats {
-  // Common Stats
-  final int? totalAssets;
-
-  // Admin Stats
-  final int? totalUsers;
-  final int? pendingUsersCount;
-  final int? totalBorrowings;
-  final ChartData? userGrowth;
-  final Map<String, dynamic>? assetDistribution;
-  final Map<String, dynamic>? assetStatus;
-
-  // Officer Stats
-  final int? activeBorrowingsCount;
-  final int? pendingRequestsCount;
-  final int? overdueBorrowingsCount;
-  final List<RecentRequest>? newRequests;
-
-  // Student Stats
-  final int? totalAvailableAssets;
-  final int? myActiveBorrowingsCount;
-  final int? pendingBorrowingsCount;
-  final int? approvedOrOverdueBorrowingsCount;
-  final Map<String, dynamic>? upcomingDueBorrowing;
+   final int? rejectedBorrowingsCount;
+  final int? returnedBorrowingsCount;
 
   DashboardStats({
     this.totalAssets,
@@ -84,6 +62,8 @@ class DashboardStats {
     this.activeBorrowingsCount,
     this.pendingRequestsCount,
     this.overdueBorrowingsCount,
+    this.rejectedBorrowingsCount,
+    this.returnedBorrowingsCount,
     this.newRequests,
     this.totalAvailableAssets,
     this.myActiveBorrowingsCount,
@@ -109,6 +89,8 @@ class DashboardStats {
       activeBorrowingsCount: _parseInt(json['active_borrowings_count']),
       pendingRequestsCount: _parseInt(json['pending_requests_count']),
       overdueBorrowingsCount: _parseInt(json['overdue_borrowings_count']),
+      rejectedBorrowingsCount: _parseInt(json['rejected_borrowings_count']),
+      returnedBorrowingsCount: _parseInt(json['returned_borrowings_count']),
       newRequests: (json['new_requests'] as List<dynamic>?)
           ?.map((e) => RecentRequest.fromJson(e as Map<String, dynamic>))
           .toList(),

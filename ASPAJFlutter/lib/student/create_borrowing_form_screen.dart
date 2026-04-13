@@ -29,7 +29,7 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
   @override
   void initState() {
     super.initState();
-    print('CreateBorrowingFormScreen.initState: Initializing borrowing create screen');
+    debugPrint('CreateBorrowingFormScreen.initState: Initializing borrowing create screen');
     // Load cart data to ensure it's fresh
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<BorrowingProvider>().loadCart();
@@ -431,25 +431,22 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
 
     try {
       await borrowingProvider.createBorrowing(borrowingData);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Borrowing request submitted successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.of(context).pop(); // Go back to previous screen
-      }
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Borrowing request submitted successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.of(context).pop(); // Go back to previous screen
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to submit borrowing request: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to submit borrowing request: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -527,3 +524,4 @@ class CartItemCard extends StatelessWidget {
     );
   }
 }
+

@@ -86,8 +86,8 @@ class OfficerAssetController extends Controller
         $data['jurusan'] = $user->jurusan;
 
         if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('public/commodities');
-            $data['photo'] = Storage::url($path);
+            $path = $request->file('photo')->store('commodities', 'public');
+            $data['photo'] = $path; // Will store 'commodities/filename.jpg'
         }
 
         Commodity::create($data);
@@ -130,11 +130,11 @@ class OfficerAssetController extends Controller
         if ($request->hasFile('photo')) {
             // Delete old photo if it exists
             if ($commodity->photo) {
-                Storage::delete(str_replace('/storage', 'public', $commodity->photo));
+                Storage::disk('public')->delete($commodity->photo);
             }
 
-            $path = $request->file('photo')->store('public/commodities');
-            $data['photo'] = Storage::url($path);
+            $path = $request->file('photo')->store('commodities', 'public');
+            $data['photo'] = $path;
         }
 
         $commodity->update($data);

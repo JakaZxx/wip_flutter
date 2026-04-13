@@ -13,6 +13,8 @@ class Commodity extends Model
         'name', 'code', 'stock', 'jurusan', 'lokasi', 'condition', 'photo',
         'merk', 'sumber', 'tahun', 'deskripsi', 'harga_satuan'
     ];
+    
+    protected $appends = ['photo_url'];
 
     // Mutator to normalize jurusan on set
     public function setJurusanAttribute($value)
@@ -34,19 +36,26 @@ class Commodity extends Model
     public function getPhotoUrlAttribute()
     {
         if ($this->photo) {
-            $photoPath = $this->photo;
+            $path = $this->photo;
+            
+            // If it's a full URL, return it
+            if (filter_var($path, FILTER_VALIDATE_URL)) {
+                return $path;
+            }
 
-            // Remove common incorrect prefixes
-            $photoPath = str_replace('laptop /', '', $photoPath);
-            $photoPath = str_replace('/storage/', '', $photoPath);
-            $photoPath = str_replace('public/', '', $photoPath);
+            // Clean up common incorrect prefixes if they exist in DB
+            $path = str_replace(['public/', '/storage/', 'storage/'], '', $path);
+            $path = ltrim($path, '/');
 
-            // Trim any leading/trailing slashes that might result from replacements
-            $photoPath = ltrim($photoPath, '/');
-
-            return asset('storage/' . $photoPath);
+            // Check existence in storage link
+            if (file_exists(public_path('storage/' . $path))) {
+                return asset('storage/' . $path);
+            }
+            
+            // Fallback: prepend storage/ if not already there
+            return asset('storage/' . $path);
         }
-        return null;
+        return asset('images/default-asset.png');
     }
 
     // Relasi ke borrowings

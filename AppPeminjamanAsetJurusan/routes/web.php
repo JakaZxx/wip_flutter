@@ -15,6 +15,7 @@ use App\Http\Controllers\OfficerDashboardController;
 use App\Http\Controllers\StudentDashboardController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\RegisterController;
+use Illuminate\Support\Facades\File;
 use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\BugReportController;
@@ -29,11 +30,11 @@ use App\Http\Controllers\CartController;
 
 // Route untuk mengakses file storage secara langsung
 Route::get('/storage/{path}', function($path) {
-    $path = storage_path('app/public/' . $path);
-    if (!File::exists($path)) {
+    $fullPath = storage_path('app/public/' . $path);
+    if (!file_exists($fullPath)) {
         abort(404);
     }
-    return response()->file($path, [
+    return response()->file($fullPath, [
         'Cache-Control' => 'public, max-age=3600',
         'Access-Control-Allow-Origin' => '*'
     ]);

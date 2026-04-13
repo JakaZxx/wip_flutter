@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class Borrowing extends Model
 {
     use HasFactory;
+    
+    protected $appends = ['return_photo_url'];
 
     protected $fillable = [
         'student_id',

@@ -22,7 +22,7 @@ class AuthController extends Controller
         try {
             // Validate input
             $validator = Validator::make($request->all(), [
-                'email' => 'required|email',
+                'email' => 'required', // Relaxed to allow NIS
                 'password' => 'required|string|min:6',
             ]);
 
@@ -38,8 +38,12 @@ class AuthController extends Controller
 
             $credentials = $request->only('email', 'password');
 
-            if (Auth::attempt($credentials)) {
-                $user = Auth::user();
+            // Find user by email or nis
+            $user = \App\Models\User::where('email', $credentials['email'])
+                ->orWhere('nis', $credentials['email'])
+                ->first();
+
+            if ($user && \Illuminate\Support\Facades\Hash::check($credentials['password'], $user->password)) {
                 $user->load('student.schoolClass');
                 $token = $user->createToken('API Token')->plainTextToken;
                 Log::info('AuthController::login ended successfully');
@@ -54,7 +58,7 @@ class AuthController extends Controller
                 Log::info('AuthController::login ended');
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid email or password'
+                    'message' => 'Invalid email/NIS or password'
                 ], 401);
             }
         } catch (\Exception $e) {

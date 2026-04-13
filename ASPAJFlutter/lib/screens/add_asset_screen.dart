@@ -1,13 +1,14 @@
 // ignore_for_file: use_build_context_synchronously
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../providers/commodity_provider.dart';
 import '../services/api_service.dart';
+import '../theme/app_theme.dart';
 
 class AddAssetScreen extends StatefulWidget {
   const AddAssetScreen({super.key});
@@ -122,276 +123,218 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tambah Unit Kerja'),
-        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Image picker area
-              Center(
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: CustomScrollView(
+        slivers: [
+          _buildSliverAppBar(),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: _formKey,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 140,
-                      height: 140,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                      ),
-                      child: _pickedImageBytes != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.memory(
-                                _pickedImageBytes!,
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                          : const Icon(Icons.photo, size: 48, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        TextButton.icon(
-                          onPressed: () async {
-                            final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-                            if (image != null) {
-                              final bytes = await image.readAsBytes();
-                              setState(() {
-                                _pickedImage = image;
-                                _pickedImageBytes = bytes;
-                                _removePhoto = false;
-                              });
-                            }
-                          },
-                          icon: const Icon(Icons.photo_library),
-                          label: const Text('Pilih Foto'),
-                        ),
-                        const SizedBox(width: 8),
-                        TextButton.icon(
-                          onPressed: () async {
-                            final XFile? image = await _picker.pickImage(source: ImageSource.camera, imageQuality: 80);
-                            if (image != null) {
-                              final bytes = await image.readAsBytes();
-                              setState(() {
-                                _pickedImage = image;
-                                _pickedImageBytes = bytes;
-                                _removePhoto = false;
-                              });
-                            }
-                          },
-                          icon: const Icon(Icons.camera_alt),
-                          label: const Text('Ambil Foto'),
-                        ),
-                        const SizedBox(width: 8),
-                        if (_pickedImageBytes != null || _pickedImage != null)
-                          TextButton.icon(
-                            onPressed: () {
-                              setState(() {
-                                _pickedImage = null;
-                                _pickedImageBytes = null;
-                                _removePhoto = true;
-                              });
-                            },
-                            icon: const Icon(Icons.delete_forever, color: Colors.red),
-                            label: const Text('Hapus Foto', style: TextStyle(color: Colors.red)),
-                          ),
-                      ],
-                    ),
+                    _buildImagePickerSection(),
+                    const SizedBox(height: 32),
+                    _buildSectionHeader('INFORMASI DASAR'),
                     const SizedBox(height: 16),
+                    _buildPremiumTextField(_nameController, 'Nama Aset / Unit Kerja', Icons.inventory_2_outlined),
+                    const SizedBox(height: 16),
+                    _buildPremiumTextField(_codeController, 'Kode Aset', Icons.qr_code_2_rounded),
+                    const SizedBox(height: 16),
+                    _buildPremiumTextField(_stockController, 'Jumlah Stok', Icons.format_list_numbered_rounded, keyboardType: TextInputType.number),
+                    const SizedBox(height: 16),
+                    _buildPremiumDropdown(_selectedJurusan, 'Jurusan / Departemen', _jurusanOptions, (v) => setState(() => _selectedJurusan = v)),
+                    const SizedBox(height: 32),
+                    _buildSectionHeader('DETAIL & LOKASI'),
+                    const SizedBox(height: 16),
+                    _buildPremiumTextField(_lokasiController, 'Lokasi Penempatan', Icons.location_on_outlined),
+                    const SizedBox(height: 16),
+                    _buildPremiumTextField(_merkController, 'Merk / Brand', Icons.branding_watermark_outlined),
+                    const SizedBox(height: 16),
+                    _buildPremiumTextField(_hargaSatuanController, 'Harga Satuan (Rp)', Icons.payments_outlined, keyboardType: TextInputType.number),
+                    const SizedBox(height: 16),
+                    _buildPremiumTextField(_sumberController, 'Sumber Perolehan', Icons.source_outlined),
+                    const SizedBox(height: 16),
+                    _buildPremiumTextField(_tahunController, 'Tahun Perolehan', Icons.calendar_today_outlined, keyboardType: TextInputType.number),
+                    const SizedBox(height: 16),
+                    _buildPremiumTextField(_deskripsiController, 'Deskripsi Tambahan', Icons.description_outlined, maxLines: 3),
+                    const SizedBox(height: 48),
+                    _buildSubmitButton(),
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),
-              // Nama Unit Kerja
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nama Unit Kerja *',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Nama unit kerja wajib diisi';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Kode Unit Kerja
-              TextFormField(
-                controller: _codeController,
-                decoration: const InputDecoration(
-                  labelText: 'Kode Unit Kerja *',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Kode unit kerja wajib diisi';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Jumlah Stok
-              TextFormField(
-                controller: _stockController,
-                decoration: const InputDecoration(
-                  labelText: 'Jumlah Stok *',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Stok wajib diisi';
-                  }
-                  final stock = int.tryParse(value);
-                  if (stock == null || stock < 0) {
-                    return 'Stok harus berupa angka positif';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Lokasi Unit Kerja
-              TextFormField(
-                controller: _lokasiController,
-                decoration: const InputDecoration(
-                  labelText: 'Lokasi Unit Kerja *',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Lokasi unit kerja wajib diisi';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Jurusan
-              DropdownButtonFormField<String>(
-                initialValue: _selectedJurusan,
-                decoration: const InputDecoration(
-                  labelText: 'Jurusan *',
-                  border: OutlineInputBorder(),
-                ),
-                items: _jurusanOptions.map((jurusan) {
-                  return DropdownMenuItem(
-                    value: jurusan,
-                    child: Text(jurusan),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() => _selectedJurusan = value);
-                },
-                validator: (value) {
-                  if (value == null) {
-                    return 'Jurusan wajib dipilih';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Merk
-              TextFormField(
-                controller: _merkController,
-                decoration: const InputDecoration(
-                  labelText: 'Merk',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Harga Satuan
-              TextFormField(
-                controller: _hargaSatuanController,
-                decoration: const InputDecoration(
-                  labelText: 'Harga Satuan',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value != null && value.trim().isNotEmpty) {
-                    final harga = double.tryParse(value);
-                    if (harga == null || harga < 0) {
-                      return 'Harga harus berupa angka positif';
-                    }
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Sumber
-              TextFormField(
-                controller: _sumberController,
-                decoration: const InputDecoration(
-                  labelText: 'Sumber',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Tahun
-              TextFormField(
-                controller: _tahunController,
-                decoration: const InputDecoration(
-                  labelText: 'Tahun',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value != null && value.trim().isNotEmpty) {
-                    final tahun = int.tryParse(value);
-                    if (tahun == null || tahun < 1900 || tahun > DateTime.now().year + 1) {
-                      return 'Tahun tidak valid';
-                    }
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Deskripsi
-              TextFormField(
-                controller: _deskripsiController,
-                decoration: const InputDecoration(
-                  labelText: 'Deskripsi',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 24),
-
-              // Submit Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submitForm,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Simpan'),
-                ),
-              ),
-            ],
+            ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSliverAppBar() {
+    return SliverAppBar(
+      expandedHeight: 120,
+      pinned: true,
+      elevation: 0,
+      flexibleSpace: FlexibleSpaceBar(
+        centerTitle: true,
+        title: Text(
+          'Tambah Aset Baru',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
+        ),
+        background: Container(
+          decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
         ),
       ),
     );
   }
+
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title,
+      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF94A3B8), letterSpacing: 1.2),
+    );
+  }
+
+  Widget _buildImagePickerSection() {
+    return Center(
+      child: Column(
+        children: [
+          Container(
+            width: 160,
+            height: 160,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 10))],
+              border: Border.all(color: const Color(0xFFF1F5F9), width: 2),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: _pickedImageBytes != null
+                  ? Image.memory(_pickedImageBytes!, fit: BoxFit.cover)
+                  : Icon(Icons.add_a_photo_outlined, size: 40, color: Colors.grey[300]),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildSmallIconButton(Icons.photo_library_outlined, 'Galeri', () async {
+                final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+                if (image != null) _setPickedImage(image);
+              }),
+              const SizedBox(width: 12),
+              _buildSmallIconButton(Icons.camera_alt_outlined, 'Kamera', () async {
+                final XFile? image = await _picker.pickImage(source: ImageSource.camera, imageQuality: 80);
+                if (image != null) _setPickedImage(image);
+              }),
+              if (_pickedImageBytes != null) ...[
+                const SizedBox(width: 12),
+                _buildSmallIconButton(Icons.delete_outline_rounded, 'Hapus', () {
+                  setState(() { _pickedImage = null; _pickedImageBytes = null; _removePhoto = true; });
+                }, color: Colors.red),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _setPickedImage(XFile image) async {
+    final bytes = await image.readAsBytes();
+    setState(() {
+      _pickedImage = image;
+      _pickedImageBytes = bytes;
+      _removePhoto = false;
+    });
+  }
+
+  Widget _buildSmallIconButton(IconData icon, String label, VoidCallback onTap, {Color? color}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(color: (color ?? AppTheme.primaryBlue).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: color ?? AppTheme.primaryBlue),
+            const SizedBox(width: 6),
+            Text(label, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: color ?? AppTheme.primaryBlue)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPremiumTextField(TextEditingController controller, String label, IconData icon, {TextInputType? keyboardType, int maxLines = 1}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF64748B))),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon, color: AppTheme.primaryBlue, size: 20),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+            contentPadding: const EdgeInsets.all(16),
+          ),
+          validator: (v) => (v == null || v.isEmpty) ? 'Field ini wajib diisi' : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPremiumDropdown(String? value, String label, List<String> options, Function(String?) onChanged) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF64748B))),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              isExpanded: true,
+              hint: Text('Pilih Opsi', style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey)),
+              items: options.map((o) => DropdownMenuItem(value: o, child: Text(o, style: GoogleFonts.poppins(fontSize: 14)))).toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return Container(
+      width: double.infinity,
+      height: 56,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(colors: [AppTheme.primaryBlue, Color(0xFF2563EB)]),
+        boxShadow: [BoxShadow(color: AppTheme.primaryBlue.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 6))],
+      ),
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _submitForm,
+        style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+        child: _isLoading
+            ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+            : Text('SIMPAN ASET', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.2)),
+      ),
+    );
+  }
 }
+

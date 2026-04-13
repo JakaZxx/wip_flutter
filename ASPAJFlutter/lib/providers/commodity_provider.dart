@@ -14,18 +14,18 @@ class CommodityProvider with ChangeNotifier {
   String? get error => _error;
 
   Future<void> fetchCommodities({String? search, String? jurusan}) async {
-    print('CommodityProvider.fetchCommodities: Starting to fetch commodities with search: $search, jurusan: $jurusan');
+    debugPrint('CommodityProvider.fetchCommodities: Starting to fetch commodities with search: $search, jurusan: $jurusan');
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      print('CommodityProvider.fetchCommodities: Calling ApiService.getCommodities');
+      debugPrint('CommodityProvider.fetchCommodities: Calling ApiService.getCommodities');
       _commodities = await _apiService.getCommodities(search: search, jurusan: jurusan);
-      print('CommodityProvider.fetchCommodities: Successfully fetched ${_commodities.length} commodities');
+      debugPrint('CommodityProvider.fetchCommodities: Successfully fetched ${_commodities.length} commodities');
     } catch (e, stackTrace) {
-      print('CommodityProvider.fetchCommodities: Exception occurred: $e');
-      print('CommodityProvider.fetchCommodities: Stack trace: $stackTrace');
+      debugPrint('CommodityProvider.fetchCommodities: Exception occurred: $e');
+      debugPrint('CommodityProvider.fetchCommodities: Stack trace: $stackTrace');
       _error = e.toString();
     } finally {
       _isLoading = false;
@@ -34,7 +34,7 @@ class CommodityProvider with ChangeNotifier {
   }
 
   Future<void> searchCommodities(String query) async {
-    print('CommodityProvider.searchCommodities: Searching commodities with query: $query');
+    debugPrint('CommodityProvider.searchCommodities: Searching commodities with query: $query');
     await fetchCommodities(search: query);
   }
 
@@ -110,3 +110,4 @@ class CommodityProvider with ChangeNotifier {
     }
   }
 }
+

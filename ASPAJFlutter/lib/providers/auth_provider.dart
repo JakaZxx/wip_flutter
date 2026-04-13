@@ -17,7 +17,7 @@ class AuthProvider with ChangeNotifier {
 
   // Cek apakah user sudah login saat aplikasi dimulai
   Future<void> checkAuthStatus() async {
-    print('AuthProvider.checkAuthStatus: Starting to check auth status');
+    debugPrint('AuthProvider.checkAuthStatus: Starting to check auth status');
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -25,30 +25,33 @@ class AuthProvider with ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
-      print('AuthProvider.checkAuthStatus: Token from prefs: ${token != null ? 'present' : 'null'}');
+      debugPrint('AuthProvider.checkAuthStatus: Token from prefs: ${token != null ? 'present' : 'null'}');
 
       if (token != null && token.isNotEmpty) {
-        print('AuthProvider.checkAuthStatus: Token found, getting current user');
+        debugPrint('AuthProvider.checkAuthStatus: Token found, getting current user');
         // Token ada, coba dapatkan data user
         _user = await _apiService.getCurrentUser();
-        print('AuthProvider.checkAuthStatus: User loaded: ${_user?.name}, role: ${_user?.role}, approved: ${_user?.isApproved}');
+        debugPrint('AuthProvider.checkAuthStatus: User loaded: ${_user?.name}, role: ${_user?.role}, approved: ${_user?.isApproved}');
 
         // Check verification status for students and officers
+        /* DISABLING FORCED VERIFICATION FOR NOW
         if (_user!.isStudent && _user!.emailVerifiedAt == null) {
-          print('AuthProvider.checkAuthStatus: Student email not verified, logging out');
+          debugPrint('AuthProvider.checkAuthStatus: Student email not verified, logging out');
           await _logoutLocally();
           _error = 'Silahkan lakukan verifikasi email melalui website';
-        } else if (_user!.isOfficer && !_user!.isApproved) {
-          print('AuthProvider.checkAuthStatus: Officer not approved, logging out');
+        } else 
+        */
+        if (_user!.isOfficer && !_user!.isApproved) {
+          debugPrint('AuthProvider.checkAuthStatus: Officer not approved, logging out');
           await _logoutLocally();
           _error = 'Akun mu belum terverifikasi silahkan login pada halaman website';
         }
       } else {
-        print('AuthProvider.checkAuthStatus: No token found');
+        debugPrint('AuthProvider.checkAuthStatus: No token found');
       }
     } catch (e, stackTrace) {
-      print('AuthProvider.checkAuthStatus: Exception occurred: $e');
-      print('AuthProvider.checkAuthStatus: Stack trace: $stackTrace');
+      debugPrint('AuthProvider.checkAuthStatus: Exception occurred: $e');
+      debugPrint('AuthProvider.checkAuthStatus: Stack trace: $stackTrace');
       // Token tidak valid atau error, hapus token
       await _logoutLocally();
       _error = 'Sesi login telah berakhir';
@@ -60,36 +63,39 @@ class AuthProvider with ChangeNotifier {
 
   // Login
   Future<bool> login(String email, String password) async {
-    print('AuthProvider.login: Starting login process');
+    debugPrint('AuthProvider.login: Starting login process');
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      print('AuthProvider.login: Calling ApiService.login');
+      debugPrint('AuthProvider.login: Calling ApiService.login');
       final response = await _apiService.login(email, password);
-      print('AuthProvider.login: ApiService response: $response');
+      debugPrint('AuthProvider.login: ApiService response: $response');
 
       // Check if login was successful (token should be set)
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
 
       if (token != null && token.isNotEmpty) {
-        print('AuthProvider.login: Token found, getting user data');
+        debugPrint('AuthProvider.login: Token found, getting user data');
         // Get user data after successful login
         final user = await _apiService.getCurrentUser();
-        print('AuthProvider.login: User data loaded: ${user?.name}, role: ${user?.role}, approved: ${user?.isApproved}');
+        debugPrint('AuthProvider.login: User data loaded: ${user.name}, role: ${user.role}, approved: ${user.isApproved}');
 
         // Check verification status for students and officers
+        /* DISABLING FORCED VERIFICATION FOR NOW
         if (user!.isStudent && user.emailVerifiedAt == null) {
-          print('AuthProvider.login: Student email not verified, logging out');
+          debugPrint('AuthProvider.login: Student email not verified, logging out');
           await _logoutLocally();
           _error = 'Silahkan lakukan verifikasi email melalui website';
           _isLoading = false;
           notifyListeners();
           return false;
-        } else if (user.isOfficer && !user.isApproved) {
-          print('AuthProvider.login: Officer not approved, logging out');
+        } else 
+        */
+        if (user.isOfficer && !user.isApproved) {
+          debugPrint('AuthProvider.login: Officer not approved, logging out');
           await _logoutLocally();
           _error = 'Akun mu belum terverifikasi silahkan login pada halaman website';
           _isLoading = false;
@@ -103,15 +109,15 @@ class AuthProvider with ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        print('AuthProvider.login: No token found, login failed');
+        debugPrint('AuthProvider.login: No token found, login failed');
         _error = response['message'] ?? 'Login gagal';
         _isLoading = false;
         notifyListeners();
         return false;
       }
     } catch (e, stackTrace) {
-      print('AuthProvider.login: Exception occurred: $e');
-      print('AuthProvider.login: Stack trace: $stackTrace');
+      debugPrint('AuthProvider.login: Exception occurred: $e');
+      debugPrint('AuthProvider.login: Stack trace: $stackTrace');
       _error = e.toString().replaceFirst('Exception: ', '');
       _isLoading = false;
       notifyListeners();
@@ -128,7 +134,7 @@ class AuthProvider with ChangeNotifier {
       await _apiService.logout();
     } catch (e) {
       // Error saat logout dari API, tapi tetap lanjutkan logout lokal
-      print('Error saat logout dari API: $e');
+      debugPrint('Error saat logout dari API: $e');
     }
 
     await _logoutLocally();
@@ -156,3 +162,4 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 }
+

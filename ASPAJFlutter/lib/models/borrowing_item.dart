@@ -15,6 +15,7 @@ class BorrowingItem {
   final String? description;
   final String? photoPath;
   final String? itemPhotoUrl;
+  final String? returnPhotoUrl;
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? commodityName;
@@ -32,6 +33,7 @@ class BorrowingItem {
     this.description,
     this.photoPath,
     this.itemPhotoUrl,
+    this.returnPhotoUrl,
     required this.createdAt,
     required this.updatedAt,
     this.commodityName,
@@ -53,6 +55,7 @@ class BorrowingItem {
       description: json['description'],
       photoPath: json['photo_path'],
       itemPhotoUrl: json['photo_url'],
+      returnPhotoUrl: json['return_photo_url'],
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
       commodityName: json['commodity']?['name'],
@@ -86,5 +89,41 @@ class BorrowingItem {
       return ApiService.fixPhotoUrl(photoUrl);
     }
     return commodity?.fixedPhotoUrl;
+  }
+
+  BorrowingItem copyWith({
+    int? id,
+    int? borrowingId,
+    int? commodityId,
+    int? quantity,
+    String? status,
+    String? returnCondition,
+    String? returnPhoto,
+    String? condition,
+    String? description,
+    String? photoPath,
+    String? itemPhotoUrl,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? commodityName,
+    Commodity? commodity,
+  }) {
+    return BorrowingItem(
+      id: id ?? this.id,
+      borrowingId: borrowingId ?? this.borrowingId,
+      commodityId: commodityId ?? this.commodityId,
+      quantity: quantity ?? this.quantity,
+      status: status ?? this.status,
+      returnCondition: returnCondition ?? this.returnCondition,
+      returnPhoto: returnPhoto ?? this.returnPhoto,
+      condition: condition ?? this.condition,
+      description: description ?? this.description,
+      photoPath: photoPath ?? this.photoPath,
+      itemPhotoUrl: itemPhotoUrl ?? this.itemPhotoUrl,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      commodityName: commodityName ?? this.commodityName,
+      commodity: commodity ?? this.commodity,
+    );
   }
 }

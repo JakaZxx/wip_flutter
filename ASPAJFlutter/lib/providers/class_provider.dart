@@ -95,15 +95,15 @@ class ClassProvider extends ChangeNotifier {
   }
 
   Future<bool> deleteStudentsFromClass(int classId) async {
-    print('ClassProvider.deleteStudentsFromClass: Attempting to delete all students from class $classId');
+    debugPrint('ClassProvider.deleteStudentsFromClass: Attempting to delete all students from class $classId');
     try {
       await _apiService.deleteStudentsFromClass(classId);
-      print('ClassProvider.deleteStudentsFromClass: API call successful, fetching updated classes');
+      debugPrint('ClassProvider.deleteStudentsFromClass: API call successful, fetching updated classes');
       await fetchClasses();
-      print('ClassProvider.deleteStudentsFromClass: Classes fetched successfully');
+      debugPrint('ClassProvider.deleteStudentsFromClass: Classes fetched successfully');
       return true;
     } catch (e) {
-      print('ClassProvider.deleteStudentsFromClass: Error occurred: $e');
+      debugPrint('ClassProvider.deleteStudentsFromClass: Error occurred: $e');
       _error = e.toString();
       notifyListeners();
       return false;
@@ -111,17 +111,18 @@ class ClassProvider extends ChangeNotifier {
   }
 
   Future<void> removeStudentFromClass(int classId, int studentId) async {
-    print('ClassProvider.removeStudentFromClass: Attempting to remove student $studentId from class $classId');
+    debugPrint('ClassProvider.removeStudentFromClass: Attempting to remove student $studentId from class $classId');
     try {
       await _apiService.removeStudentFromClass(classId, studentId);
-      print('ClassProvider.removeStudentFromClass: API call successful, fetching updated classes');
+      debugPrint('ClassProvider.removeStudentFromClass: API call successful, fetching updated classes');
       await fetchClasses();
-      print('ClassProvider.removeStudentFromClass: Classes fetched successfully');
+      debugPrint('ClassProvider.removeStudentFromClass: Classes fetched successfully');
     } catch (e) {
-      print('ClassProvider.removeStudentFromClass: Error occurred: $e');
+      debugPrint('ClassProvider.removeStudentFromClass: Error occurred: $e');
       _error = e.toString();
       notifyListeners();
       rethrow;
     }
   }
 }
+

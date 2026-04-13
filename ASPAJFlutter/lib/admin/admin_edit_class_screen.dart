@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../providers/class_provider.dart';
 import '../models/school_class.dart';
 import '../models/student.dart';
+import '../theme/app_theme.dart';
 
 class AdminEditClassScreen extends StatefulWidget {
   final int? classId;
@@ -61,7 +63,6 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
       _programStudies = programStudies.cast<String>();
     });
 
-    // Set default values for new class
     if (widget.classId == null && _levels.isNotEmpty && _programStudies.isNotEmpty) {
       _selectedLevel = _levels.first;
       _selectedProgramStudy = _programStudies.first;
@@ -91,11 +92,15 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading students: $e')),
+          SnackBar(
+            content: Text('Error loading student roster: $e'),
+            backgroundColor: AppTheme.dangerRed,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     } finally {
-      setState(() => _isLoadingStudents = false);
+      if (mounted) setState(() => _isLoadingStudents = false);
     }
   }
 
@@ -104,199 +109,334 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
     final isEditing = widget.classId != null;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isEditing ? 'Edit Kelas' : 'Tambah Kelas'),
-        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Class Form
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        isEditing ? 'Edit Kelas' : 'Tambah Kelas Baru',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Nama Kelas',
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Nama kelas wajib diisi';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      DropdownButtonFormField<String>(
-                        value: _selectedLevel,
-                        decoration: const InputDecoration(
-                          labelText: 'Tingkat',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: _levels.map((level) {
-                          return DropdownMenuItem(
-                            value: level,
-                            child: Text('Tingkat $level'),
-                          );
-                        }).toList(),
-                        onChanged: (value) => setState(() => _selectedLevel = value),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Tingkat wajib dipilih';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      DropdownButtonFormField<String>(
-                        value: _selectedProgramStudy,
-                        decoration: const InputDecoration(
-                          labelText: 'Program Studi',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: _programStudies.map((program) {
-                          return DropdownMenuItem(
-                            value: program,
-                            child: Text(program),
-                          );
-                        }).toList(),
-                        onChanged: (value) => setState(() => _selectedProgramStudy = value),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Program studi wajib dipilih';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _descriptionController,
-                        decoration: const InputDecoration(
-                          labelText: 'Deskripsi',
-                          border: OutlineInputBorder(),
-                        ),
-                        maxLines: 3,
-                      ),
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          _buildSliverAppBar(isEditing),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionHeader('CORE CONFIGURATION', 'Specify class identity and academic level'),
+                    const SizedBox(height: 16),
+                    _buildClassConfigCard(),
+                    const SizedBox(height: 32),
+                    if (isEditing) ...[
+                      _buildStudentManagementZone(),
+                      const SizedBox(height: 32),
                     ],
-                  ),
+                    _buildActionButtons(),
+                  ],
                 ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-              const SizedBox(height: 24),
-
-              // Students Section (only for editing)
-              if (isEditing) ...[
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Siswa (${_students.length})',
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                            Row(
-                              children: [
-                                ElevatedButton.icon(
-                                  onPressed: _moveStudents,
-                                  icon: const Icon(Icons.swap_horiz),
-                                  label: const Text('Pindah Siswa'),
-                                ),
-                                const SizedBox(width: 8),
-                                ElevatedButton.icon(
-                                  onPressed: _deleteAllStudents,
-                                  icon: const Icon(Icons.delete_sweep),
-                                  label: const Text('Hapus Semua'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        if (_isLoadingStudents)
-                          const Center(child: CircularProgressIndicator())
-                        else if (_students.isEmpty)
-                          const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(16.0),
-                              child: Text('Tidak ada siswa di kelas ini'),
-                            ),
-                          )
-                        else
-                          SizedBox(
-                            height: 300,
-                            child: ListView.builder(
-                              itemCount: _students.length,
-                              itemBuilder: (context, index) {
-                                final student = _students[index];
-                                return ListTile(
-                                  leading: CircleAvatar(
-                                    child: Text(student.name[0].toUpperCase()),
-                                  ),
-                                  title: Text(student.name),
-                                  subtitle: Text('ID: ${student.id}'),
-                                  trailing: IconButton(
-                                    icon: const Icon(Icons.delete),
-                                    onPressed: () => _removeStudent(student),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
+  Widget _buildSliverAppBar(bool isEditing) {
+    return SliverAppBar(
+      expandedHeight: 140,
+      pinned: true,
+      elevation: 0,
+      backgroundColor: AppTheme.primaryBlue,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+        onPressed: () => Navigator.pop(context),
+      ),
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
+          child: const Stack(
+            children: [
+              Positioned(
+                right: -20,
+                bottom: -20,
+                child: Opacity(
+                  opacity: 0.1,
+                  child: Icon(Icons.school_rounded, size: 180, color: Colors.white),
                 ),
-              ],
-
-              const SizedBox(height: 24),
-
-              // Action Buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: _isSaving ? null : () => Navigator.pop(context),
-                    child: const Text('Batal'),
-                  ),
-                  const SizedBox(width: 16),
-                  ElevatedButton(
-                    onPressed: _isSaving ? null : _saveClass,
-                    child: _isSaving
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Simpan'),
-                  ),
-                ],
               ),
             ],
           ),
         ),
+        title: Text(
+          isEditing ? 'MODIFY CLASS' : 'REGISTER CLASS',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 18, color: Colors.white, letterSpacing: 2),
+        ),
+        centerTitle: true,
       ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, String subtitle) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w900, color: const Color(0xFF94A3B8), letterSpacing: 2),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF64748B)),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildClassConfigCard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 20, offset: const Offset(0, 10)),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildInputField(
+            controller: _nameController,
+            label: 'CLASS IDENTITY NAME',
+            hint: 'e.g., XII RPL 1',
+            icon: Icons.badge_outlined,
+            validator: (v) => v == null || v.isEmpty ? 'Nama kelas wajib diisi' : null,
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: _buildDropdownField(
+                  label: 'ACADEMIC LEVEL',
+                  value: _selectedLevel,
+                  items: _levels.map((l) => DropdownMenuItem(value: l, child: Text(l))).toList(),
+                  onChanged: (v) => setState(() => _selectedLevel = v),
+                  icon: Icons.layers_outlined,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildDropdownField(
+                  label: 'PROG. STUDY',
+                  value: _selectedProgramStudy,
+                  items: _programStudies.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
+                  onChanged: (v) => setState(() => _selectedProgramStudy = v),
+                  icon: Icons.auto_awesome_mosaic_outlined,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _buildInputField(
+            controller: _descriptionController,
+            label: 'STUDY LOGS / DESCRIPTION',
+            hint: 'Optional class metadata...',
+            icon: Icons.notes_rounded,
+            maxLines: 3,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    int maxLines = 1,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.outfit(fontSize: 9, fontWeight: FontWeight.bold, color: const Color(0xFF64748B), letterSpacing: 1),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          maxLines: maxLines,
+          style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF1E293B)),
+          decoration: AppTheme.premiumInputDecoration(hint, icon),
+          validator: validator,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDropdownField({
+    required String label,
+    required String? value,
+    required List<DropdownMenuItem<String>> items,
+    required Function(String?) onChanged,
+    required IconData icon,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.outfit(fontSize: 9, fontWeight: FontWeight.bold, color: const Color(0xFF64748B), letterSpacing: 1),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          initialValue: value,
+          items: items,
+          onChanged: onChanged,
+          style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF1E293B)),
+          decoration: AppTheme.premiumInputDecoration('', icon),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStudentManagementZone() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildSectionHeader('STUDENT ROSTER', '${_students.length} active students enrolled'),
+            Row(
+              children: [
+                _buildQuickAction(Icons.swap_horiz_rounded, AppTheme.primaryBlue, _moveStudents),
+                const SizedBox(width: 8),
+                _buildQuickAction(Icons.delete_sweep_outlined, AppTheme.dangerRed, _deleteAllStudents),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Container(
+          constraints: const BoxConstraints(maxHeight: 400),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFFF1F5F9)),
+          ),
+          child: _isLoadingStudents
+              ? const Padding(padding: EdgeInsets.all(40), child: Center(child: CircularProgressIndicator()))
+              : _students.isEmpty
+                  ? _buildEmptyRoster()
+                  : ListView.separated(
+                      padding: const EdgeInsets.all(12),
+                      shrinkWrap: true,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: _students.length,
+                      separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                      itemBuilder: (context, index) => _buildStudentItem(_students[index]),
+                    ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickAction(IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+        child: Icon(icon, size: 18, color: color),
+      ),
+    );
+  }
+
+  Widget _buildStudentItem(Student student) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(gradient: AppTheme.primaryGradient, borderRadius: BorderRadius.circular(12)),
+            alignment: Alignment.center,
+            child: Text(student.name[0].toUpperCase(), style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.white)),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(student.name, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13, color: const Color(0xFF1E293B))),
+                Text('NIS: ${student.email}', style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFF94A3B8))),
+              ],
+            ),
+          ),
+          _buildQuickAction(Icons.person_remove_outlined, AppTheme.dangerRed, () => _removeStudent(student)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyRoster() {
+    return Padding(
+      padding: const EdgeInsets.all(40.0),
+      child: Column(
+        children: [
+          const Icon(Icons.people_outline_rounded, size: 48, color: Color(0xFFCBD5E1)),
+          const SizedBox(height: 16),
+          Text('No students found', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFF64748B))),
+          Text('This class currently has no enrollments.', textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF94A3B8))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Row(
+      children: [
+        Expanded(
+          child: TextButton(
+            onPressed: _isSaving ? null : () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            ),
+            child: Text('DISCARD', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFF64748B))),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          flex: 2,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: AppTheme.primaryGradient,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(color: AppTheme.primaryBlue.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8)),
+              ],
+            ),
+            child: ElevatedButton(
+              onPressed: _isSaving ? null : _saveClass,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              ),
+              child: _isSaving
+                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : Text('COMMIT CHANGES', style: GoogleFonts.outfit(fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1.5)),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -305,169 +445,92 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
     final availableClasses = classProvider.classes.where((c) => c.id != widget.classId && c.programStudy == _selectedProgramStudy).toList();
 
     if (availableClasses.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tidak ada kelas lain untuk dipindahkan')),
-      );
+      _showError('No alternative classes found for migration.');
       return;
     }
 
     if (_students.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tidak ada siswa di kelas ini untuk dipindahkan')),
-      );
+      _showError('Roster is empty. Nothing to migrate.');
       return;
     }
 
     final selectedClass = await showDialog<SchoolClass>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Pilih Kelas Tujuan'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text('Target Destination', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
         content: SizedBox(
           width: double.maxFinite,
-          child: ListView.builder(
+          child: ListView.separated(
             shrinkWrap: true,
             itemCount: availableClasses.length,
+            separatorBuilder: (c, i) => const Divider(),
             itemBuilder: (context, index) {
               final schoolClass = availableClasses[index];
               return ListTile(
-                title: Text(schoolClass.name),
-                subtitle: Text('${schoolClass.level ?? ''} - ${schoolClass.programStudy ?? ''}'),
+                title: Text(schoolClass.name, style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                subtitle: Text('${schoolClass.level} - ${schoolClass.programStudy}', style: GoogleFonts.poppins(fontSize: 12)),
                 onTap: () => Navigator.pop(context, schoolClass),
               );
             },
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
-          ),
-        ],
       ),
     );
 
     if (selectedClass != null) {
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Konfirmasi'),
-          content: Text('Yakin ingin memindahkan semua ${_students.length} siswa ke kelas ${selectedClass.name}?'),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
-            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Pindah')),
-          ],
-        ),
-      );
-
+      final confirm = await _showConfirmDialog('Confirm Migration', 'Are you sure you want to move ${_students.length} students to ${selectedClass.name}?');
       if (confirm == true) {
         final studentIds = _students.map((s) => s.id).toList();
         try {
-          final success = await classProvider.moveStudents(
-            widget.classId!,
-            selectedClass.id,
-            studentIds,
-          );
+          final success = await classProvider.moveStudents(widget.classId!, selectedClass.id, studentIds);
           if (success && mounted) {
             _loadStudents();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Semua siswa berhasil dipindahkan')),
-            );
+            _showSuccess('Batch migration completed successfully.');
           }
         } catch (e) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(e.toString())),
-            );
-          }
+          _showError(e.toString());
         }
       }
     }
   }
 
   Future<void> _deleteAllStudents() async {
-    print('AdminEditClassScreen._deleteAllStudents: Starting delete all students from class ${widget.classId}');
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Konfirmasi'),
-        content: const Text('Yakin ingin menghapus semua siswa dari kelas ini?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Hapus')),
-        ],
-      ),
-    );
-
-    print('AdminEditClassScreen._deleteAllStudents: User confirmation: $confirm');
-
+    final confirm = await _showConfirmDialog('Mass Removal', 'Proceed with deleting the entire student roster for this class? This cannot be undone.');
     if (confirm == true) {
-      print('AdminEditClassScreen._deleteAllStudents: Proceeding with delete all');
       try {
-        final success = await context.read<ClassProvider>().deleteStudentsFromClass(widget.classId!);
-        print('AdminEditClassScreen._deleteAllStudents: Delete all result: $success');
-        if (success && mounted) {
-          print('AdminEditClassScreen._deleteAllStudents: Reloading students');
-          await _loadStudents();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Semua siswa berhasil dihapus')),
-          );
+        if (mounted) {
+          final success = await context.read<ClassProvider>().deleteStudentsFromClass(widget.classId!);
+          if (success && mounted) {
+            await _loadStudents();
+            _showSuccess('Entire roster has been cleared.');
+          }
         }
       } catch (e) {
-        print('AdminEditClassScreen._deleteAllStudents: Error occurred: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error menghapus semua siswa: $e')),
-          );
-        }
+        _showError(e.toString());
       }
-    } else {
-      print('AdminEditClassScreen._deleteAllStudents: User cancelled the operation');
     }
   }
 
   Future<void> _removeStudent(Student student) async {
-    print('AdminEditClassScreen._removeStudent: Starting removal of student ${student.name} (ID: ${student.id}) from class ${widget.classId}');
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Konfirmasi'),
-        content: Text('Yakin ingin menghapus siswa ${student.name}?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Hapus')),
-        ],
-      ),
-    );
-
-    print('AdminEditClassScreen._removeStudent: User confirmation: $confirm');
-
+    final confirm = await _showConfirmDialog('Remove Enrollment', 'Remove ${student.name} from the current class registry?');
     if (confirm == true) {
-      print('AdminEditClassScreen._removeStudent: Proceeding with removal');
       try {
-        await context.read<ClassProvider>().removeStudentFromClass(widget.classId!, student.id);
-        print('AdminEditClassScreen._removeStudent: Removal successful, reloading students');
         if (mounted) {
-          await _loadStudents();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Siswa ${student.name} berhasil dihapus')),
-          );
+          await context.read<ClassProvider>().removeStudentFromClass(widget.classId!, student.id);
+          if (mounted) {
+            await _loadStudents();
+            _showSuccess('Student registry updated.');
+          }
         }
       } catch (e) {
-        print('AdminEditClassScreen._removeStudent: Error occurred: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error menghapus siswa: $e')),
-          );
-        }
+        _showError(e.toString());
       }
-    } else {
-      print('AdminEditClassScreen._removeStudent: User cancelled the operation');
     }
   }
 
   Future<void> _saveClass() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isSaving = true);
 
     try {
@@ -480,28 +543,45 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
       };
 
       final classProvider = context.read<ClassProvider>();
-      bool success;
-
-      if (widget.classId != null) {
-        success = await classProvider.updateClass(widget.classId!, classData);
-      } else {
-        success = await classProvider.createClass(classData);
-      }
+      final success = widget.classId != null ? await classProvider.updateClass(widget.classId!, classData) : await classProvider.createClass(classData);
 
       if (success && mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Kelas berhasil ${widget.classId != null ? 'diupdate' : 'ditambahkan'}')),
-        );
+        _showSuccess('Database synchronized successfully.');
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
-      }
+      _showError(e.toString());
     } finally {
-      setState(() => _isSaving = false);
+      if (mounted) setState(() => _isSaving = false);
     }
+  }
+
+  Future<bool?> _showConfirmDialog(String title, String message) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(title, style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        content: Text(message, style: GoogleFonts.poppins()),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('CANCEL', style: GoogleFonts.outfit(color: const Color(0xFF64748B)))),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.dangerRed, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            child: Text('PROCEED', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showError(String m) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m), backgroundColor: AppTheme.dangerRed, behavior: SnackBarBehavior.floating));
+  }
+
+  void _showSuccess(String m) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m), backgroundColor: const Color(0xFF10B981), behavior: SnackBarBehavior.floating));
   }
 }

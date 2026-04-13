@@ -21,6 +21,14 @@ class IsAdmin
         if (Auth::check() && Auth::user()->isAdmin()) {
             return $next($request);
         }
+
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized access. Admin role required.'
+            ], 403);
+        }
+
         return redirect()->route('login')->with('error', 'Login Anda tidak memiliki akses sebagai admin.');
     }
 }

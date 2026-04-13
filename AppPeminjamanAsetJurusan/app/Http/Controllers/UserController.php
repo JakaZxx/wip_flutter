@@ -192,8 +192,9 @@ class UserController extends Controller
         if ($request->hasFile('profile_picture')) {
             $file = $request->file('profile_picture');
             $filename = time() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/profile_pictures'), $filename);
-            $data['profile_picture'] = 'uploads/profile_pictures/' . $filename;
+            // Store in storage/app/public/profile_pictures
+            $path = $file->storeAs('profile_pictures', $filename, 'public');
+            $data['profile_picture'] = $path; // Will store 'profile_pictures/filename.jpg'
         }
 
         $user->update($data);

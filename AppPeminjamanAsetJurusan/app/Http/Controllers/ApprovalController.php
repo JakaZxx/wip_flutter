@@ -46,8 +46,8 @@ class ApprovalController extends Controller
                         continue;
                     }
 
-                    $decrement = min($commodity->stock, $item->quantity);
-                    $commodity->decrement('stock', $decrement);
+                    // Stock is already decremented at request time (PeminjamanController@store)
+                    // We only update status to approved here.
 
                     if ($commodity->stock == 0) {
                         $emptyStockItems[] = $commodity->name;
@@ -173,6 +173,9 @@ class ApprovalController extends Controller
                         $skippedItems[] = $commodity->name . ' (Jurusan: ' . $commodity->jurusan . ')';
                         continue;
                     }
+
+                    // Restore stock when rejected since it was decremented at request time
+                    $commodity->increment('stock', $item->quantity);
 
                     $item->update(['status' => 'rejected']);
                     $rejectedItems[] = $commodity->name;

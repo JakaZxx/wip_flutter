@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 import '../providers/auth_provider.dart';
+import '../providers/borrowing_provider.dart';
 import '../models/user.dart';
-import '../models/student.dart';
 import '../services/api_service.dart';
+import '../theme/app_theme.dart';
 import 'help_support_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -19,577 +22,382 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _nisController = TextEditingController();
-  final TextEditingController _classController = TextEditingController();
-
   XFile? _profileImage;
   bool _isLoading = false;
-  String? _successMessage;
-  String? _errorMessage;
-
-  @override
-  void initState() {
-    super.initState();
-    print('[ProfileScreen] ProfileScreen initialized');
-    _loadUserData();
-  }
-
-  void _loadUserData() {
-    final authProvider = context.read<AuthProvider>();
-    final user = authProvider.user;
-
-    if (user != null) {
-      _nameController.text = user.name;
-      _emailController.text = user.email;
-      _nisController.text = user.nis ?? '';
-      _classController.text = user.jurusan ?? '';
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
+    final borrowingProvider = context.watch<BorrowingProvider>();
     final user = authProvider.user;
 
-    print('[ProfileScreen] ProfileScreen build called');
+    final totalBorrowings = borrowingProvider.borrowings.length;
+    final pendingBorrowings = borrowingProvider.borrowings.where((b) => b.status == 'pending').length;
+    final activeBorrowings = borrowingProvider.borrowings.where((b) => b.status == 'approved').length;
 
-    // Get profile picture URL with proper handling
     String? profilePictureUrl;
     if (user?.profilePicture != null && user!.profilePicture!.isNotEmpty) {
       profilePictureUrl = ApiService.fixPhotoUrl(user.profilePicture!);
-    } else if (user?.profilePictureUrl != null &&
-        user!.profilePictureUrl!.isNotEmpty) {
+    } else if (user?.profilePictureUrl != null && user!.profilePictureUrl!.isNotEmpty) {
       profilePictureUrl = ApiService.fixPhotoUrl(user.profilePictureUrl!);
     }
 
     ImageProvider? displayImage;
     if (_profileImage != null) {
-      if (kIsWeb) {
-        displayImage = NetworkImage(_profileImage!.path);
-      } else {
-        displayImage = FileImage(File(_profileImage!.path));
-      }
+      displayImage = kIsWeb ? NetworkImage(_profileImage!.path) : FileImage(File(_profileImage!.path)) as ImageProvider;
     } else if (profilePictureUrl != null) {
       displayImage = NetworkImage(profilePictureUrl);
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // Success/Error Messages
-            if (_successMessage != null) ...[
-              Container(
-                padding: const EdgeInsets.all(12),
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green.shade300),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.check_circle, color: Colors.green),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _successMessage!,
-                        style: const TextStyle(color: Colors.green),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            if (_errorMessage != null) ...[
-              Container(
-                padding: const EdgeInsets.all(12),
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.shade300),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.error, color: Colors.red),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-
-            // Profile Card (matching Blade structure)
-            Card(
-              elevation: 4,
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    // Profile Avatar
-                    CircleAvatar(
-                      radius: 60,
-                      backgroundImage: displayImage,
-                      child: displayImage == null
-                          ? const Icon(
-                              Icons.person,
-                              size: 60,
-                              color: Colors.grey,
-                            )
-                          : null,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Profile Info
-                    Text(
-                      user?.name ?? '',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    // Email with verification status
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(user?.email ?? ''),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: user?.emailVerifiedAt != null
-                                ? Colors.green
-                                : Colors.orange,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            user?.emailVerifiedAt != null
-                                ? 'Verified'
-                                : 'Not Verified',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    // Role Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _getRoleColor(user?.role),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        user?.role.toUpperCase() ?? 'USER',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-
-                    // Class for students
-                    if (user?.isStudent == true && user?.jurusan != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        user!.jurusan!,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Profile Form Section
-            Card(
-              elevation: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Pengaturan Akun',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Name Field (read-only display)
-                    const Text('Name'),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(user?.name ?? ''),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Email Field (read-only display with verification)
-                    const Text('Email'),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(child: Text(user?.email ?? '')),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: user?.emailVerifiedAt != null
-                                  ? Colors.green
-                                  : Colors.orange,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              user?.emailVerifiedAt != null
-                                  ? 'Verified'
-                                  : 'Not Verified',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Role Field (read-only)
-                    const Text('Role'),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(user?.role.toUpperCase() ?? ''),
-                    ),
-
-                    // Class for students
-                    if (user?.isStudent == true) ...[
-                      const SizedBox(height: 16),
-                      const Text('Class'),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(user?.student?.schoolClass?.name ?? 'N/A'),
-                      ),
-                    ],
-
-                    const SizedBox(height: 24),
-
-                    // Profile Picture Upload
-                    const Text('Foto Profile'),
-                    const SizedBox(height: 8),
-                    ElevatedButton.icon(
-                      onPressed: _pickAndCropImage,
-                      icon: const Icon(Icons.photo_camera),
-                      label: const Text('Pilih Foto'),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 48),
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Save Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isLoading || _profileImage == null ? null : _saveProfile,
-                        child: _isLoading
-                            ? const CircularProgressIndicator()
-                            : const Text('Simpan'),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Help & Support Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const HelpSupportScreen(),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.help),
-                        label: const Text('Help & Support'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue[700],
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Logout Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: _logout,
-                        icon: const Icon(Icons.logout),
-                        label: const Text('Logout'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red[700],
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatCard(String title, String value, IconData icon) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(icon, size: 32, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(width: 16),
-            Expanded(
+      backgroundColor: const Color(0xFFF1F5F9),
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          _buildSliverAppBar(user, displayImage),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  _buildStatsSection(totalBorrowings, pendingBorrowings, activeBorrowings),
+                  const SizedBox(height: 32),
+                  _buildSectionHeader('DATA IDENTITAS', 'Informasi Pribadi'),
+                  const SizedBox(height: 16),
+                  _buildInfoCard(user),
+                  const SizedBox(height: 32),
+                  _buildSectionHeader('KEAMANAN & BANTUAN', 'Akses Infrastruktur'),
+                  const SizedBox(height: 16),
+                  _buildActionsCard(context),
+                  if (_profileImage != null) ...[
+                    const SizedBox(height: 48),
+                    _buildSaveAction(),
+                  ],
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Color _getRoleColor(String? role) {
-    switch (role) {
-      case 'admin':
-        return Colors.red;
-      case 'officer':
-        return Colors.blue;
-      case 'student':
-        return Colors.green;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  Future<void> _pickAndCropImage() async {
-    try {
-      final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-      if (pickedFile != null) {
-        final croppedFile = await ImageCropper().cropImage(
-          sourcePath: pickedFile.path,
-          aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
-          uiSettings: [
-            AndroidUiSettings(
-              toolbarTitle: 'Crop Image',
-              toolbarColor: Theme.of(context).colorScheme.primary,
-              toolbarWidgetColor: Colors.white,
-              initAspectRatio: CropAspectRatioPreset.square,
-              lockAspectRatio: true,
-            ),
-            IOSUiSettings(
-              title: 'Crop Image',
-              aspectRatioLockEnabled: true,
-              resetAspectRatioEnabled: false,
-            ),
-            WebUiSettings(
-              context: context,
-              presentStyle: WebPresentStyle.dialog,
-              size: const CropperSize(
-                width: 300,
-                height: 300,
-              ),
-            ),
-          ],
-        );
-
-        if (!mounted) return;
-
-        if (croppedFile != null) {
-          setState(() {
-            _profileImage = XFile(croppedFile.path);
-          });
-        }
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _errorMessage = 'Failed to pick or crop image: $e';
-      });
-    }
-  }
-
-  Future<void> _saveProfile() async {
-    setState(() {
-      _isLoading = true;
-      _successMessage = null;
-      _errorMessage = null;
-    });
-
-    try {
-      if (_profileImage == null) {
-        setState(() {
-          _errorMessage = 'No changes to save.';
-          _isLoading = false;
-        });
-        return;
-      }
-
-      final authProvider = context.read<AuthProvider>();
-      final apiService = ApiService();
-      final imageBytes = await _profileImage!.readAsBytes();
-
-      // Call the new updateProfile method directly with the image bytes.
-      // This sends the file directly to the user update endpoint.
-      final updatedUser = await apiService.updateProfile(
-        imageBytes: imageBytes,
-        imageFileName: 'profile_image.jpg', // The backend will generate its own name anyway
-      );
-
-      // Refresh user data in the provider
-      authProvider.updateUser(updatedUser);
-
-      setState(() {
-        _successMessage = 'Profile updated successfully!';
-        _profileImage = null; // Clear the temporary image
-      });
-
-    } catch (e, stackTrace) {
-      if (!mounted) return;
-      print('[ProfileScreen] Failed to update profile. Error: $e');
-      print('[ProfileScreen] StackTrace: $stackTrace');
-      setState(() {
-        _errorMessage = 'Failed to update profile: $e';
-      });
-    } finally {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _logout() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Konfirmasi Logout'),
-        content: const Text('Apakah Anda yakin ingin keluar?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Logout'),
           ),
         ],
       ),
     );
+  }
 
-    if (confirmed == true) {
-      if (!mounted) return;
-      final authProvider = context.read<AuthProvider>();
-      await authProvider.logout();
+  Widget _buildSliverAppBar(User? user, ImageProvider? displayImage) {
+    return SliverAppBar(
+      expandedHeight: 340,
+      pinned: true,
+      elevation: 0,
+      backgroundColor: AppTheme.primaryBlue,
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
+          child: Stack(
+            children: [
+              const Positioned(
+                bottom: -50,
+                right: -30,
+                child: Opacity(opacity: 0.1, child: FaIcon(FontAwesomeIcons.userShield, size: 240, color: Colors.white)),
+              ),
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 60),
+                    _buildProfileAvatar(displayImage),
+                    const SizedBox(height: 24),
+                    Text(user?.name ?? 'System Entity', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 26, letterSpacing: 0.5)),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
+                      child: Text(user?.role.toUpperCase() ?? 'IDENTIFIED', style: GoogleFonts.outfit(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 2)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
+  Widget _buildProfileAvatar(ImageProvider? displayImage) {
+    return Stack(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(5),
+          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5)),
+          child: Container(
+            width: 130, height: 130,
+            decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
+            child: ClipOval(
+              child: displayImage != null
+                  ? Image(image: displayImage, fit: BoxFit.cover)
+                  : const FaIcon(FontAwesomeIcons.solidUser, size: 50, color: Color(0xFFCBD5E1)),
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: 5, right: 5,
+          child: InkWell(
+            onTap: _pickAndCropImage,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 15, offset: Offset(0, 5))]),
+              child: const FaIcon(FontAwesomeIcons.camera, color: AppTheme.primaryBlue, size: 16),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatsSection(int total, int pending, int active) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 25, offset: const Offset(0, 10))],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildStatBubble('TOTAL', total.toString(), FontAwesomeIcons.arrowsSpin, const Color(0xFF6366F1)),
+          _buildDivider(),
+          _buildStatBubble('PENDING', pending.toString(), FontAwesomeIcons.hourglassHalf, const Color(0xFFF59E0B)),
+          _buildDivider(),
+          _buildStatBubble('AKTIF', active.toString(), FontAwesomeIcons.satellite, const Color(0xFF10B981)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDivider() => Container(height: 30, width: 1, color: const Color(0xFFF1F5F9));
+
+  Widget _buildStatBubble(String label, String value, dynamic icon, Color color) {
+    return Column(
+      children: [
+        Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)), child: FaIcon(icon, color: color, size: 14)),
+        const SizedBox(height: 10),
+        Text(value, style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 22, color: const Color(0xFF1E293B))),
+        Text(label, style: GoogleFonts.outfit(color: const Color(0xFF94A3B8), fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(String title, String subtitle) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w900, color: const Color(0xFF475569), letterSpacing: 2)),
+        Text(subtitle, style: GoogleFonts.poppins(fontSize: 10, color: const Color(0xFF94A3B8))),
+      ],
+    );
+  }
+
+  Widget _buildInfoCard(User? user) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 10))],
+      ),
+      child: Column(
+        children: [
+          _buildInfoSector(FontAwesomeIcons.envelope, 'EMAIL', user?.email ?? '-'),
+          _buildTileDivider(),
+          _buildInfoSector(FontAwesomeIcons.shieldHalved, 'STATUS VERIFIKASI', user?.emailVerifiedAt != null ? 'TERVERIFIKASI' : 'PENDING', isStatus: true, statusColor: user?.emailVerifiedAt != null ? const Color(0xFF10B981) : Colors.orange),
+          _buildTileDivider(),
+          _buildInfoSector(FontAwesomeIcons.graduationCap, 'INSTITUSI', user?.student?.schoolClass?.name ?? user?.jurusan ?? '-'),
+          if (user?.nis != null) ...[
+            _buildTileDivider(),
+            _buildInfoSector(FontAwesomeIcons.idBadge, 'NIS', user!.nis!),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoSector(dynamic icon, String label, String value, {bool isStatus = false, Color? statusColor}) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(14)),
+            child: FaIcon(icon, size: 16, color: const Color(0xFF64748B)),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: GoogleFonts.outfit(fontSize: 9, color: const Color(0xFF94A3B8), fontWeight: FontWeight.w900, letterSpacing: 1)),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(value, style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF334155))),
+                    if (isStatus) ...[
+                      const SizedBox(width: 8),
+                      FaIcon(FontAwesomeIcons.solidCircleCheck, size: 14, color: statusColor),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTileDivider() => const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9), indent: 68);
+
+  Widget _buildActionsCard(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 10))],
+      ),
+      child: Column(
+        children: [
+          _buildActionPortal(FontAwesomeIcons.circleQuestion, 'PUSAT BANTUAN', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen()))),
+          _buildTileDivider(),
+          _buildActionPortal(FontAwesomeIcons.circleInfo, 'TENTANG APLIKASI', () {}),
+          _buildTileDivider(),
+          _buildActionPortal(FontAwesomeIcons.powerOff, 'KELUAR', _logout, isDestructive: true),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionPortal(dynamic icon, String label, VoidCallback onTap, {bool isDestructive = false}) {
+    final color = isDestructive ? AppTheme.dangerRed : const Color(0xFF334155);
+    return ListTile(
+      onTap: onTap,
+      leading: FaIcon(icon, size: 16, color: color),
+      title: Text(label, style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w900, color: color, letterSpacing: 1)),
+      trailing: FaIcon(FontAwesomeIcons.chevronRight, size: 12, color: isDestructive ? color.withValues(alpha: 0.5) : const Color(0xFFCBD5E1)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+    );
+  }
+
+  Widget _buildSaveAction() {
+    return SizedBox(
+      width: double.infinity,
+      height: 60,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _saveProfile,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.primaryBlue,
+          foregroundColor: Colors.white,
+          elevation: 12,
+          shadowColor: AppTheme.primaryBlue.withValues(alpha: 0.5),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        ),
+        child: _isLoading
+            ? const CircularProgressIndicator(color: Colors.white)
+            : Text('SIMPAN PERUBAHAN', style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1.5)),
+      ),
+    );
+  }
+
+  Future<void> _logout() async {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      pageBuilder: (context, anim1, anim2) => const SizedBox.shrink(),
+      transitionBuilder: (context, anim1, anim2, child) {
+        return Transform.scale(
+          scale: anim1.value,
+          child: Opacity(
+            opacity: anim1.value,
+            child: AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              title: Text('KELUAR?', style: GoogleFonts.outfit(fontWeight: FontWeight.w900, letterSpacing: 1)),
+              content: Text('Apakah Anda yakin ingin keluar dari akun ini?', style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF64748B))),
+              actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(context), child: Text('BATAL', style: GoogleFonts.outfit(color: const Color(0xFF94A3B8), fontWeight: FontWeight.w900))),
+                ElevatedButton(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await context.read<AuthProvider>().logout();
+                    if (context.mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.dangerRed, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 0),
+                  child: Text('KELUAR', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w900)),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickAndCropImage() async {
+    try {
+      final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 50);
+      if (pickedFile == null) return;
+
+      if (mounted) {
+      final webSettings = WebUiSettings(
+        context: context,
+        presentStyle: WebPresentStyle.dialog,
+        size: const CropperSize(width: 400, height: 400),
+      );
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: pickedFile.path,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        uiSettings: [
+          AndroidUiSettings(toolbarTitle: 'Identity Calibration', toolbarColor: AppTheme.primaryBlue, toolbarWidgetColor: Colors.white, initAspectRatio: CropAspectRatioPreset.square, lockAspectRatio: true),
+          IOSUiSettings(title: 'Identity Calibration'),
+          webSettings,
+        ],
+      );
+
+        if (mounted) setState(() => _profileImage = XFile(croppedFile?.path ?? pickedFile.path));
+      }
+    } catch (e) {
       if (!mounted) return;
-      // Clear navigation stack and return to the root (which will be the login screen)
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Identity calibration failed: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _nisController.dispose();
-    _classController.dispose();
-    super.dispose();
+  Future<void> _saveProfile() async {
+    setState(() => _isLoading = true);
+    try {
+      if (_profileImage == null) return;
+      final imageBytes = await _profileImage!.readAsBytes();
+      final updatedUser = await ApiService().updateProfile(imageBytes: imageBytes, imageFileName: 'identity.jpg');
+      if (mounted) {
+        context.read<AuthProvider>().updateUser(updatedUser);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Identity synchronized successfully.'), backgroundColor: Color(0xFF10B981), behavior: SnackBarBehavior.floating));
+        setState(() => _profileImage = null);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Gagal: $e'),
+        backgroundColor: AppTheme.dangerRed,
+        behavior: SnackBarBehavior.floating,
+      ));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 }

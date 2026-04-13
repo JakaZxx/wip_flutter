@@ -101,4 +101,7 @@ class UserProvider extends ChangeNotifier {
       return false;
     }
   }
+
+  Future<bool> approveOfficer(int userId) => approveUser(userId);
+  Future<bool> rejectOfficer(int userId) => rejectUser(userId);
 }

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Borrowing;
 use App\Models\BorrowingItem;
 use App\Models\Commodity;
+use App\Models\Cart;
+use App\Models\CartItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -160,7 +162,7 @@ class PeminjamanController extends Controller
 
             $validator = Validator::make($request->all(), [
                 'borrow_date' => 'required|date|after_or_equal:today',
-                'return_date' => 'required|date|after:borrow_date',
+                'return_date' => 'required|date|after_or_equal:borrow_date',
                 'tujuan' => 'required|string|max:255',
                 'items' => 'required|array|min:1',
                 'items.*.commodity_id' => 'required|exists:commodities,id',
@@ -235,11 +237,24 @@ class PeminjamanController extends Controller
                 }
             }
 
+            // Ensure student record exists
+            if (!$user->student) {
+                Log::error('PeminjamanController::store student record not found', [
+                    'user_id' => $user->id,
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Student profile not found. Please complete your profile first.'
+                ], 404);
+            }
+
             // Create borrowing
             $borrowing = Borrowing::create([
                 'student_id' => $user->student->id,
                 'borrow_date' => $request->borrow_date,
+                'borrow_time' => $request->borrow_time,
                 'return_date' => $request->return_date,
+                'return_time' => $request->return_time,
                 'status' => 'pending',
                 'tujuan' => $request->tujuan,
             ]);
@@ -272,7 +287,7 @@ class PeminjamanController extends Controller
             }
 
             // Clear the cart after successful borrowing creation
-            $cart = \App\Models\Cart::getOrCreateForUser($user->id);
+            $cart = Cart::getOrCreateForUser($user->id);
             $cart->clear();
 
             Log::info('PeminjamanController::store cart cleared after successful borrowing', [
@@ -354,7 +369,7 @@ class PeminjamanController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'return_condition' => 'required|string',
-                'return_photo' => 'nullable|file|max:10240',
+                'return_photo' => 'nullable', // Can be file or string path
                 'items' => 'nullable|array',
                 'items.*' => 'exists:borrowing_items,id',
             ]);
@@ -443,6 +458,9 @@ class PeminjamanController extends Controller
             $photoPath = null;
             if ($request->hasFile('return_photo')) {
                 $photoPath = $request->file('return_photo')->store('returns', 'public');
+            } elseif ($request->filled('return_photo') && is_string($request->return_photo)) {
+                $photoPath = $request->return_photo;
+                $photoPath = str_replace(['public/', 'storage/'], '', $photoPath);
             }
 
             // Update selected item statuses to returned and return items to inventory (only for approved items)
@@ -730,16 +748,20 @@ class PeminjamanController extends Controller
     {
         $borrowing->load('items');
         $items = $borrowing->items;
+        $pendingCount = $items->where('status', 'pending')->count();
         $approvedCount = $items->where('status', 'approved')->count();
         $rejectedCount = $items->where('status', 'rejected')->count();
         $totalItems = $items->count();
 
-        if ($approvedCount === $totalItems) {
+        if ($pendingCount > 0) {
+            $borrowing->status = 'pending';
+        } elseif ($approvedCount === $totalItems) {
             $borrowing->status = 'approved';
         } elseif ($rejectedCount === $totalItems) {
             $borrowing->status = 'rejected';
         } else {
-            $borrowing->status = 'partially_approved';
+            // Mixed approved and rejected, but no pending
+            $borrowing->status = $approvedCount > 0 ? 'partially_approved' : 'rejected';
         }
 
         $borrowing->save();
@@ -754,9 +776,15 @@ class PeminjamanController extends Controller
         ]);
 
         try {
-            $validator = Validator::make($request->all(), [
+            // Allow both return_condition (backend name) and condition (frontend name)
+            $input = $request->all();
+            if (!isset($input['return_condition']) && isset($input['condition'])) {
+                $input['return_condition'] = $input['condition'];
+            }
+
+            $validator = Validator::make($input, [
                 'return_condition' => 'required|string',
-                'return_photo' => 'nullable|file|max:10240',
+                'return_photo' => 'nullable', // Can be file or string path
             ]);
 
             if ($validator->fails()) {
@@ -764,6 +792,7 @@ class PeminjamanController extends Controller
                     'borrowing_id' => $borrowingId,
                     'item_id' => $itemId,
                     'errors' => $validator->errors()->toArray(),
+                    'input' => $input,
                 ]);
                 return response()->json([
                     'success' => false,
@@ -787,16 +816,18 @@ class PeminjamanController extends Controller
             }
 
             // Check if user owns this borrowing or is admin
-            if (!$user->isAdmin() && $borrowing->student_id !== $user->student->id) {
-                Log::warning('PeminjamanController::returnItem unauthorized access', [
-                    'borrowing_id' => $borrowingId,
-                    'item_id' => $itemId,
-                    'user_id' => $user->id,
-                ]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized'
-                ], 403);
+            if (!$user->isAdmin()) {
+                if (!$user->student || $borrowing->student_id !== $user->student->id) {
+                    Log::warning('PeminjamanController::returnItem unauthorized access', [
+                        'borrowing_id' => $borrowingId,
+                        'item_id' => $itemId,
+                        'user_id' => $user->id,
+                    ]);
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized'
+                    ], 403);
+                }
             }
 
             // Find the specific item
@@ -810,6 +841,14 @@ class PeminjamanController extends Controller
                     'success' => false,
                     'message' => 'Item not found in this borrowing'
                 ], 404);
+            }
+
+            // Check if item is already returned
+            if ($item->status === 'returned') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Item already returned'
+                ], 400);
             }
 
             // Check if item is approved
@@ -828,48 +867,49 @@ class PeminjamanController extends Controller
             // Handle photo upload
             $photoPath = null;
             if ($request->hasFile('return_photo')) {
+                // Case: Multipart file upload
                 $photoPath = $request->file('return_photo')->store('returns', 'public');
-                Log::info('PeminjamanController::returnItem photo uploaded', [
-                    'borrowing_id' => $borrowingId,
-                    'item_id' => $itemId,
-                    'photo_path' => $photoPath,
-                ]);
+            } elseif (isset($input['return_photo']) && is_string($input['return_photo'])) {
+                // Case: Pre-uploaded photo path sent as string
+                $photoPath = $input['return_photo'];
+                $photoPath = str_replace('public/', '', $photoPath);
+            }
+            
+            if ($photoPath) {
+                $item->return_photo = $photoPath;
             }
 
             // Update item status to returned
             $item->status = 'returned';
+            $item->return_condition = $input['return_condition'];
             $item->save();
 
             // Return item to inventory
             $commodity = $item->commodity;
-            $commodity->stock += $item->quantity;
-            $commodity->save();
+            if ($commodity) {
+                $commodity->stock += $item->quantity;
+                $commodity->save();
+            }
 
             Log::info('PeminjamanController::returnItem item returned successfully', [
                 'borrowing_id' => $borrowingId,
                 'item_id' => $itemId,
-                'commodity_id' => $commodity->id,
-                'quantity_returned' => $item->quantity,
-                'new_stock' => $commodity->stock,
+                'commodity_id' => $commodity ? $commodity->id : null,
             ]);
 
             // Update borrowing status based on returned items
             $this->updateBorrowingStatusAfterReturn($borrowing);
 
-            // Set return condition and photo only if fully returned
+            // Set return condition and photo only if fully returned (overall info)
             if ($borrowing->status === 'returned') {
-                $borrowing->return_condition = $request->return_condition;
-                $borrowing->return_photo = $photoPath;
+                $borrowing->return_condition = $input['return_condition'];
+                if ($photoPath) {
+                    $borrowing->return_photo = $photoPath;
+                }
                 $borrowing->save();
-                Log::info('PeminjamanController::returnItem borrowing fully returned', [
-                    'borrowing_id' => $borrowingId,
-                ]);
             }
 
-            Log::info('PeminjamanController::returnItem ended successfully', [
-                'borrowing_id' => $borrowingId,
-                'item_id' => $itemId,
-            ]);
+            Log::info('PeminjamanController::returnItem ended successfully');
 
             return response()->json([
                 'success' => true,
@@ -926,7 +966,7 @@ class PeminjamanController extends Controller
             }
 
             // Get or create cart for the user
-            $cart = \App\Models\Cart::getOrCreateForUser($user->id);
+            $cart = Cart::getOrCreateForUser($user->id);
 
             // Get cart items with commodity information
             $cartItems = $cart->items()->with('commodity')->get()->map(function ($item) {
@@ -960,6 +1000,7 @@ class PeminjamanController extends Controller
         Log::info('PeminjamanController::saveCart started', [
             'request_data' => $request->all(),
             'user_id' => $request->user() ? $request->user()->id : null,
+            'auth' => auth()->id(),
             'headers' => $request->headers->all(),
         ]);
 
@@ -977,7 +1018,7 @@ class PeminjamanController extends Controller
             Log::info('PeminjamanController::saveCart user check', [
                 'user_id' => $user->id,
                 'user_role' => $user->role,
-                'is_student' => $user->isStudent,
+                'is_student' => $user->isStudent(),
                 'has_student_relation' => $user->student ? true : false,
             ]);
 
@@ -993,7 +1034,7 @@ class PeminjamanController extends Controller
             }
 
             $validator = Validator::make($request->all(), [
-                'items' => 'required|array',
+                'items' => 'present|array',
                 'items.*.commodity_id' => 'required|exists:commodities,id',
                 'items.*.quantity' => 'required|integer|min:1',
             ]);
@@ -1017,14 +1058,14 @@ class PeminjamanController extends Controller
             ]);
 
             // Get or create cart for the user
-            $cart = \App\Models\Cart::getOrCreateForUser($user->id);
+            $cart = Cart::getOrCreateForUser($user->id);
 
             // Clear existing cart items
             $cart->clear();
 
             // Add new items to cart
             foreach ($request->items as $itemData) {
-                \App\Models\CartItem::create([
+                CartItem::create([
                     'cart_id' => $cart->id,
                     'commodity_id' => $itemData['commodity_id'],
                     'quantity' => $itemData['quantity'],
@@ -1043,14 +1084,16 @@ class PeminjamanController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('PeminjamanController::saveCart error', [
-                'message' => $e->getMessage(),
+                'error_message' => $e->getMessage(),
+                'error_file' => $e->getFile(),
+                'error_line' => $e->getLine(),
                 'trace' => $e->getTraceAsString(),
                 'user_id' => $request->user() ? $request->user()->id : null,
                 'request_data' => $request->all(),
             ]);
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred while saving cart'
+                'message' => 'An error occurred while saving cart: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -1103,7 +1146,7 @@ class PeminjamanController extends Controller
             }
 
             // Get or create cart for the user
-            $cart = \App\Models\Cart::getOrCreateForUser($user->id);
+            $cart = Cart::getOrCreateForUser($user->id);
 
             if ($request->quantity == 0) {
                 // Remove item from cart
@@ -1125,7 +1168,7 @@ class PeminjamanController extends Controller
                         'quantity' => $request->quantity,
                     ]);
                 } else {
-                    \App\Models\CartItem::create([
+                    CartItem::create([
                         'cart_id' => $cart->id,
                         'commodity_id' => $request->commodity_id,
                         'quantity' => $request->quantity,
@@ -1191,7 +1234,7 @@ class PeminjamanController extends Controller
             }
 
             // Get or create cart for the user
-            $cart = \App\Models\Cart::getOrCreateForUser($user->id);
+            $cart = Cart::getOrCreateForUser($user->id);
 
             // Clear all cart items
             $cart->clear();

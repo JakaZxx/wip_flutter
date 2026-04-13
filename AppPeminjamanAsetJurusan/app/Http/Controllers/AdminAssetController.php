@@ -80,8 +80,10 @@ class AdminAssetController extends Controller
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10000',
         ]);
 
+        if ($request->hasFile('photo')) {
             $path = $request->file('photo')->store('public/commodities');
             $data['photo'] = $path;
+        }
 
         return redirect()->route('admin.assets.index', ['jurusan' => $request->jurusan])
                          ->with('success', 'Barang berhasil ditambahkan.');

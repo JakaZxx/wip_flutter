@@ -9,6 +9,8 @@ class BorrowingItem extends Model
 {
     use HasFactory;
 
+    protected $appends = ['return_photo_url'];
+
     protected $fillable = [
         'borrowing_id',
         'commodity_id',

@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -15,7 +14,7 @@ import '../models/dashboard_stats.dart';
 
 class ApiService {
   // Note: Using 10.0.2.2 for Android Emulator, 127.0.0.1 for iOS, or your local machine IP
-  static const String _defaultIP = '192.168.1.3'; 
+  static const String _defaultIP = 'localhost'; 
   
   static String get baseUrl => 'http://$_defaultIP:8000/api';
   static String get baseStorageUrl => 'http://$_defaultIP:8000';
@@ -24,32 +23,23 @@ class ApiService {
     if (url == null || url.isEmpty) return null;
 
     try {
-      // If it's already a full URL, return it as is
+      // If it's already a full URL, ensure it uses the correct IP/host
       if (url.startsWith('http://') || url.startsWith('https://')) {
-        print('fixPhotoUrl - Already full URL: $url');
-        return url;
+        // Replace localhost or 127.0.0.1 with our configured IP if needed
+        String fixedUrl = url.replaceAll('localhost', _defaultIP).replaceAll('127.0.0.1', _defaultIP);
+        return fixedUrl;
       }
 
-      // For relative paths, build the full URL pointing to /storage/<path>
-      final base = Uri.parse(baseStorageUrl);
-      final segments = [
-        'storage',
-        ...url.split('/').where((seg) => seg.isNotEmpty),
-      ];
+      // Handle the 'public/' prefix stored in database
+      String cleanPath = url;
+      if (url.startsWith('public/')) {
+        cleanPath = url.substring(7); // Remove 'public/'
+      }
 
-      final uri = Uri(
-        scheme: base.scheme,
-        host: base.host,
-        port: base.hasPort ? base.port : null,
-        pathSegments: segments,
-      );
-
-      print('fixPhotoUrl - Original URL: $url');
-      print('fixPhotoUrl - Fixed URL: ${uri.toString()}');
-      return uri.toString();
-    } catch (e, stackTrace) {
-      print('fixPhotoUrl - Error: $e');
-      print('fixPhotoUrl - Stack Trace: $stackTrace');
+      // Map to the dedicated public-storage route in Laravel
+      return '$baseUrl/public-storage/$cleanPath';
+    } catch (e) {
+      debugPrint('fixPhotoUrl Error: $e');
       return null;
     }
   }
@@ -85,26 +75,26 @@ class ApiService {
   // Login
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {
-      print('ApiService.login: Attempting login for email: $email');
+      debugPrint('ApiService.login: Attempting login for email: $email');
       final response = await http.post(
         Uri.parse('$baseUrl/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
       );
 
-      print('ApiService.login: Response status: ${response.statusCode}');
-      print('ApiService.login: Response body: ${response.body}');
+      debugPrint('ApiService.login: Response status: ${response.statusCode}');
+      debugPrint('ApiService.login: Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('ApiService.login: Parsed response data: $data');
+        debugPrint('ApiService.login: Parsed response data: $data');
 
         if (data['success'] == true && data['token'] != null) {
           await _setToken(data['token']);
-          print('ApiService.login: Token saved successfully');
+          debugPrint('ApiService.login: Token saved successfully');
           return data;
         } else {
-          print(
+          debugPrint(
             'ApiService.login: Login failed - success: ${data['success']}, token: ${data['token']}',
           );
           throw Exception(
@@ -112,7 +102,7 @@ class ApiService {
           );
         }
       } else {
-        print(
+        debugPrint(
           'ApiService.login: HTTP error ${response.statusCode}: ${response.body}',
         );
         throw Exception(
@@ -120,8 +110,8 @@ class ApiService {
         );
       }
     } catch (e, stackTrace) {
-      print('ApiService.login: Exception occurred: $e');
-      print('ApiService.login: Stack trace: $stackTrace');
+      debugPrint('ApiService.login: Exception occurred: $e');
+      debugPrint('ApiService.login: Stack trace: $stackTrace');
       rethrow;
     }
   }
@@ -138,18 +128,18 @@ class ApiService {
       headers: await _getHeaders(),
     );
 
-    print('Get current user response status: ${response.statusCode}');
-    print('Get current user response body: ${response.body}');
+    debugPrint('Get current user response status: ${response.statusCode}');
+    debugPrint('Get current user response body: ${response.body}');
 
     if (response.statusCode == 200) {
       final responseJson = jsonDecode(response.body);
-      print('Parsed response JSON: $responseJson');
+      debugPrint('Parsed response JSON: $responseJson');
 
       if (responseJson['success'] == true && responseJson['data'] != null) {
         final userJson = responseJson['data'];
-        print('Extracted user data: $userJson');
+        debugPrint('Extracted user data: $userJson');
         final user = User.fromJson(userJson);
-        print('Created user object - role: ${user.role}');
+        debugPrint('Created user object - role: ${user.role}');
         return user;
       } else {
         throw Exception('Invalid response format: ${response.body}');
@@ -183,7 +173,7 @@ class ApiService {
     String? search,
     String? jurusan,
   }) async {
-    print(
+    debugPrint(
       'ApiService.getCommodities: Starting to fetch commodities with search: $search, jurusan: $jurusan',
     );
     final queryParams = <String, String>{};
@@ -193,26 +183,26 @@ class ApiService {
     final uri = Uri.parse(
       '$baseUrl/commodities',
     ).replace(queryParameters: queryParams);
-    print('ApiService.getCommodities: Requesting URI: $uri');
+    debugPrint('ApiService.getCommodities: Requesting URI: $uri');
     final response = await http.get(uri, headers: await _getHeaders());
-    print('ApiService.getCommodities: Response status: ${response.statusCode}');
+    debugPrint('ApiService.getCommodities: Response status: ${response.statusCode}');
 
     if (response.statusCode == 200) {
       final responseJson = jsonDecode(response.body);
       if (responseJson['success'] == true && responseJson['data'] != null) {
         final List<dynamic> data = responseJson['data'];
-        print(
+        debugPrint(
           'ApiService.getCommodities: Successfully parsed ${data.length} commodities',
         );
         return data.map((json) => Commodity.fromJson(json)).toList();
       } else {
-        print(
+        debugPrint(
           'ApiService.getCommodities: Invalid response format: ${response.body}',
         );
         throw Exception('Invalid response format: ${response.body}');
       }
     } else {
-      print(
+      debugPrint(
         'ApiService.getCommodities: Failed with status ${response.statusCode}: ${response.body}',
       );
       throw Exception('Failed to get commodities: ${response.body}');
@@ -232,8 +222,9 @@ class ApiService {
     if (status != null) queryParams['status'] = status;
     if (search != null && search.isNotEmpty) queryParams['search'] = search;
     if (jurusan != null && jurusan.isNotEmpty) queryParams['jurusan'] = jurusan;
-    if (classId != null && classId.isNotEmpty)
+    if (classId != null && classId.isNotEmpty) {
       queryParams['class_id'] = classId;
+    }
     if (page != null) queryParams['page'] = page.toString();
     if (perPage != null) queryParams['per_page'] = perPage.toString();
 
@@ -269,13 +260,13 @@ class ApiService {
           throw Exception('Invalid response format: ${response.body}');
         }
       } else {
-        print(
+        debugPrint(
           'ApiService.getBorrowings: Invalid response format: ${response.body}',
         );
         throw Exception('Invalid response format: ${response.body}');
       }
     } else {
-      print(
+      debugPrint(
         'ApiService.getBorrowings: Failed with status ${response.statusCode}: ${response.body}',
       );
       throw Exception('Failed to get borrowings: ${response.body}');
@@ -297,8 +288,19 @@ class ApiService {
       } else {
         throw Exception('Failed to create borrowing: Invalid response format');
       }
+    } else if (response.statusCode == 422) {
+      final responseJson = jsonDecode(response.body);
+      final errors = responseJson['errors'] as Map<String, dynamic>?;
+      if (errors != null) {
+        final firstError = errors.values.first;
+        if (firstError is List && firstError.isNotEmpty) {
+          throw Exception(firstError.first);
+        }
+      }
+      throw Exception(responseJson['message'] ?? 'Validation failed');
     } else {
-      throw Exception('Failed to create borrowing: ${response.body}');
+      final responseJson = jsonDecode(response.body);
+      throw Exception(responseJson['message'] ?? 'Failed to create borrowing: ${response.statusCode}');
     }
   }
 
@@ -364,7 +366,7 @@ class ApiService {
       }
     } else {
       // Log the error response from the server
-      print('Failed to return borrowing item. Status: ${response.statusCode}, Body: ${response.body}');
+      debugPrint('Failed to return borrowing item. Status: ${response.statusCode}, Body: ${response.body}');
       throw Exception('Failed to return borrowing item: ${response.body}');
     }
   }
@@ -551,14 +553,14 @@ class ApiService {
 
   // Delete students from class
   Future<void> deleteStudentsFromClass(int classId) async {
-    print('ApiService.deleteStudentsFromClass: Attempting to delete all students from class $classId');
+    debugPrint('ApiService.deleteStudentsFromClass: Attempting to delete all students from class $classId');
     final response = await http.delete(
       Uri.parse('$baseUrl/school-classes/$classId/students'),
       headers: await _getHeaders(),
     );
 
-    print('ApiService.deleteStudentsFromClass: Response status: ${response.statusCode}');
-    print('ApiService.deleteStudentsFromClass: Response body: ${response.body}');
+    debugPrint('ApiService.deleteStudentsFromClass: Response status: ${response.statusCode}');
+    debugPrint('ApiService.deleteStudentsFromClass: Response body: ${response.body}');
 
     if (response.statusCode != 200) {
       throw Exception('Failed to delete students from class: ${response.body}');
@@ -567,14 +569,14 @@ class ApiService {
 
   // Remove individual student from class
   Future<void> removeStudentFromClass(int classId, int studentId) async {
-    print('ApiService.removeStudentFromClass: Attempting to remove student $studentId from class $classId');
+    debugPrint('ApiService.removeStudentFromClass: Attempting to remove student $studentId from class $classId');
     final response = await http.delete(
       Uri.parse('$baseUrl/school-classes/$classId/students/$studentId'),
       headers: await _getHeaders(),
     );
 
-    print('ApiService.removeStudentFromClass: Response status: ${response.statusCode}');
-    print('ApiService.removeStudentFromClass: Response body: ${response.body}');
+    debugPrint('ApiService.removeStudentFromClass: Response status: ${response.statusCode}');
+    debugPrint('ApiService.removeStudentFromClass: Response body: ${response.body}');
 
     if (response.statusCode != 200) {
       throw Exception('Failed to remove student from class: ${response.body}');
@@ -617,18 +619,18 @@ class ApiService {
     );
     request.files.add(multipartFile);
 
-    print('[ApiService.updateProfile] Sending multipart request to /user');
+    debugPrint('[ApiService.updateProfile] Sending multipart request to /user');
 
     final response = await request.send();
     final responseData = await response.stream.bytesToString();
 
-    print('[ApiService.updateProfile] Response: ${response.statusCode}, body: $responseData');
+    debugPrint('[ApiService.updateProfile] Response: ${response.statusCode}, body: $responseData');
 
     if (response.statusCode == 200) {
       final jsonResponse = jsonDecode(responseData);
       if (jsonResponse['success'] == true && jsonResponse['data'] != null) {
         final updatedUser = User.fromJson(jsonResponse['data']);
-        print('[ApiService.updateProfile] Profile updated successfully, new profile_picture: ${updatedUser.profilePicture}');
+        debugPrint('[ApiService.updateProfile] Profile updated successfully, new profile_picture: ${updatedUser.profilePicture}');
         return updatedUser;
       } else {
         throw Exception('Failed to update profile: Invalid response format');
@@ -640,7 +642,7 @@ class ApiService {
 
   // Upload file (for profile picture or return photo)
   Future<String> uploadFile(String filePath, String fieldName) async {
-    print(
+    debugPrint(
       '[ApiService.uploadFile] Uploading file from path: $filePath, fieldName: $fieldName',
     );
 
@@ -656,21 +658,21 @@ class ApiService {
     final response = await request.send();
     final responseData = await response.stream.bytesToString();
 
-    print(
+    debugPrint(
       '[ApiService.uploadFile] Upload response: ${response.statusCode}, body: $responseData',
     );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(responseData);
       if (data['path'] != null) {
-        print('[ApiService.uploadFile] Upload successful, path: ${data['path']}');
+        debugPrint('[ApiService.uploadFile] Upload successful, path: ${data['path']}');
         return data['path'];
       } else {
-        print('[ApiService.uploadFile] Upload failed: "path" is null in response. Body: $responseData');
+        debugPrint('[ApiService.uploadFile] Upload failed: "path" is null in response. Body: $responseData');
         throw Exception('Failed to upload file: "path" is null in response');
       }
     } else {
-      print('[ApiService.uploadFile] Upload failed with status ${response.statusCode}. Body: $responseData');
+      debugPrint('[ApiService.uploadFile] Upload failed with status ${response.statusCode}. Body: $responseData');
       throw Exception('Failed to upload file: $responseData');
     }
   }
@@ -681,7 +683,7 @@ class ApiService {
     String filename,
     String fieldName,
   ) async {
-    print(
+    debugPrint(
       '[ApiService.uploadBytes] Uploading bytes: ${bytes.length} bytes, filename: $filename, fieldName: $fieldName',
     );
 
@@ -700,26 +702,26 @@ class ApiService {
     );
     request.files.add(multipartFile);
 
-    print('[ApiService.uploadBytes] Request headers: ${request.headers}');
+    debugPrint('[ApiService.uploadBytes] Request headers: ${request.headers}');
 
     final response = await request.send();
     final responseData = await response.stream.bytesToString();
 
-    print(
+    debugPrint(
       '[ApiService.uploadBytes] Upload response: ${response.statusCode}, body: $responseData',
     );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(responseData);
       if (data['path'] != null) {
-        print('[ApiService.uploadBytes] Upload successful, path: ${data['path']}');
+        debugPrint('[ApiService.uploadBytes] Upload successful, path: ${data['path']}');
         return data['path'];
       } else {
-        print('[ApiService.uploadBytes] Upload failed: "path" is null in response. Body: $responseData');
+        debugPrint('[ApiService.uploadBytes] Upload failed: "path" is null in response. Body: $responseData');
         throw Exception('Failed to upload file: "path" is null in response');
       }
     } else {
-      print('[ApiService.uploadBytes] Upload failed with status ${response.statusCode}. Body: $responseData');
+      debugPrint('[ApiService.uploadBytes] Upload failed with status ${response.statusCode}. Body: $responseData');
       throw Exception('Failed to upload file: $responseData');
     }
   }
@@ -910,7 +912,7 @@ class ApiService {
 
   // Save cart
   Future<void> saveCart(List<Map<String, dynamic>> items) async {
-    print(
+    debugPrint(
       'ApiService.saveCart: Attempting to save cart with ${items.length} items',
     );
     final response = await http.post(
@@ -919,21 +921,21 @@ class ApiService {
       body: jsonEncode({'items': items}),
     );
 
-    print('ApiService.saveCart: Response status: ${response.statusCode}');
-    print('ApiService.saveCart: Response body: ${response.body}');
+    debugPrint('ApiService.saveCart: Response status: ${response.statusCode}');
+    debugPrint('ApiService.saveCart: Response body: ${response.body}');
 
     if (response.statusCode == 200) {
       final responseJson = jsonDecode(response.body);
       if (responseJson['success'] == true) {
-        print('ApiService.saveCart: Cart saved successfully');
+        debugPrint('ApiService.saveCart: Cart saved successfully');
       } else {
-        print(
+        debugPrint(
           'ApiService.saveCart: Server returned success=false: ${responseJson['message']}',
         );
         throw Exception('Failed to save cart: ${response.body}');
       }
     } else {
-      print(
+      debugPrint(
         'ApiService.saveCart: HTTP error ${response.statusCode}: ${response.body}',
       );
       throw Exception('Failed to save cart: ${response.body}');
@@ -942,7 +944,7 @@ class ApiService {
 
   // Update cart item (add/update quantity)
   Future<void> updateCartItem(int commodityId, int quantity) async {
-    print(
+    debugPrint(
       'ApiService.updateCartItem: Updating cart item commodity_id: $commodityId, quantity: $quantity',
     );
 
@@ -966,7 +968,7 @@ class ApiService {
           items.removeAt(index);
         } else {
           // nothing to remove
-          print(
+          debugPrint(
             'ApiService.updateCartItem: Item $commodityId not present in cart, nothing to remove',
           );
         }
@@ -981,39 +983,39 @@ class ApiService {
       }
 
       // Call saveCart endpoint with full items array
-      print('ApiService.updateCartItem: Calling saveCart with items: $items');
+      debugPrint('ApiService.updateCartItem: Calling saveCart with items: $items');
       await saveCart(List<Map<String, dynamic>>.from(items));
-      print('ApiService.updateCartItem: Completed saveCart call successfully');
+      debugPrint('ApiService.updateCartItem: Completed saveCart call successfully');
     } catch (e, st) {
-      print('ApiService.updateCartItem: Exception occurred: $e');
-      print('ApiService.updateCartItem: Stack trace: $st');
+      debugPrint('ApiService.updateCartItem: Exception occurred: $e');
+      debugPrint('ApiService.updateCartItem: Stack trace: $st');
       rethrow;
     }
   }
 
   // Clear cart
   Future<void> clearCart() async {
-    print('ApiService.clearCart: Clearing cart');
+    debugPrint('ApiService.clearCart: Clearing cart');
     final response = await http.delete(
       Uri.parse('$baseUrl/cart'),
       headers: await _getHeaders(),
     );
 
-    print('ApiService.clearCart: Response status: ${response.statusCode}');
-    print('ApiService.clearCart: Response body: ${response.body}');
+    debugPrint('ApiService.clearCart: Response status: ${response.statusCode}');
+    debugPrint('ApiService.clearCart: Response body: ${response.body}');
 
     if (response.statusCode == 200) {
       final responseJson = jsonDecode(response.body);
       if (responseJson['success'] == true) {
-        print('ApiService.clearCart: Cart cleared successfully');
+        debugPrint('ApiService.clearCart: Cart cleared successfully');
       } else {
-        print(
+        debugPrint(
           'ApiService.clearCart: Server returned success=false: ${responseJson['message']}',
         );
         throw Exception('Failed to clear cart: ${responseJson['message']}');
       }
     } else {
-      print(
+      debugPrint(
         'ApiService.clearCart: HTTP error ${response.statusCode}: ${response.body}',
       );
       throw Exception('Failed to clear cart: ${response.body}');
@@ -1031,7 +1033,7 @@ class ApiService {
     if (response.statusCode == 201) {
       final responseJson = jsonDecode(response.body);
       if (responseJson['success'] == true) {
-        print('Bug report submitted successfully');
+        debugPrint('Bug report submitted successfully');
       } else {
         throw Exception('Failed to submit bug report: ${responseJson['message']}');
       }
@@ -1039,29 +1041,5 @@ class ApiService {
       throw Exception('Failed to submit bug report: ${response.body}');
     }
   }
-
-  // Update User
-  Future<void> updateUser(int userId, Map<String, dynamic> userData) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/users/$userId'),
-      headers: await _getHeaders(),
-      body: jsonEncode(userData),
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception('Failed to update user: ${response.body}');
-    }
-  }
-
-  // Delete User
-  Future<void> deleteUser(int userId) async {
-    final response = await http.delete(
-      Uri.parse('$baseUrl/users/$userId'),
-      headers: await _getHeaders(),
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception('Failed to delete user: ${response.body}');
-    }
-  }
 }
+

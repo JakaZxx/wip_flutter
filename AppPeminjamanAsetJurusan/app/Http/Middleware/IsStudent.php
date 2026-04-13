@@ -20,6 +20,14 @@ class IsStudent
         if (Auth::check() && Auth::user()->isStudent()) {
             return $next($request);
         }
+
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized access. Student role required.'
+            ], 403);
+        }
+
         return redirect()->route('login')->with('error', 'Login Anda tidak memiliki akses sebagai student.');
     }
 }

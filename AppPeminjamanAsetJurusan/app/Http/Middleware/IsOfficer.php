@@ -20,6 +20,14 @@ class IsOfficer
         if (Auth::check() && Auth::user()->isOfficer()) {
             return $next($request);
         }
+
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized access. Officer role required.'
+            ], 403);
+        }
+
         return redirect()->route('login')->with('error', 'Login Anda tidak memiliki akses sebagai officer.');
     }
 }

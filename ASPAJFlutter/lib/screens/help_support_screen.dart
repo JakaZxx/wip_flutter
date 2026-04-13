@@ -1,10 +1,7 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
 import '../services/bug_report_service.dart';
 
 class HelpSupportScreen extends StatefulWidget {
@@ -79,7 +76,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
       await bugReportService.submitBugReport(bugData);
 
       setState(() {
-        _successMessage = 'Bug report sent successfully.';
+        _successMessage = 'Laporan bug berhasil dikirim.';
         _selectedDeviceType = null;
         _selectedBugType = null;
         _descriptionController.clear();
@@ -96,7 +93,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Failed to send bug report: ${e.toString()}';
+        _errorMessage = 'Gagal mengirim laporan bug: ${e.toString()}';
       });
     } finally {
       setState(() {
@@ -109,7 +106,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Help & Support'),
+        title: const Text('Bantuan & Dukungan'),
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
       ),
       body: SingleChildScrollView(
@@ -174,7 +171,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: _selectedDeviceType,
+                initialValue: _selectedDeviceType,
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -196,7 +193,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                 },
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Device type is required';
+                    return 'Tipe perangkat wajib diisi';
                   }
                   return null;
                 },
@@ -211,7 +208,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: _selectedBugType,
+                initialValue: _selectedBugType,
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -233,7 +230,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                 },
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Bug type is required';
+                    return 'Jenis bug wajib diisi';
                   }
                   return null;
                 },
@@ -273,7 +270,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                           children: [
                             Icon(Icons.add_photo_alternate, size: 48, color: Colors.grey),
                             SizedBox(height: 8),
-                            Text('Tap to select image', style: TextStyle(color: Colors.grey)),
+                            Text('Ketuk untuk memilih gambar', style: TextStyle(color: Colors.grey)),
                           ],
                         ),
                 ),
@@ -296,11 +293,11 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                   ),
                   filled: true,
                   fillColor: Colors.grey.shade50,
-                  hintText: 'Describe the bug...',
+                  hintText: 'Jelaskan bug yang Anda temukan...',
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Bug description is required';
+                    return 'Deskripsi bug wajib diisi';
                   }
                   if (value.length > 2000) {
                     return 'Description must be less than 2000 characters';

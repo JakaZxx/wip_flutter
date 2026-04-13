@@ -24,7 +24,7 @@ class AsetController extends Controller
             $commodity = Commodity::findOrFail($id);
 
             // Tambahkan photo_url
-            $commodity->photo_url = $commodity->photo ? url(ltrim($commodity->photo, '/')) : null;
+            $commodity->photo_url = $commodity->photo_url;
 
             Log::info('AsetController::show ended');
             // Mengembalikan response JSON dengan detail aset
@@ -64,7 +64,7 @@ class AsetController extends Controller
 
             // Tambahkan photo_url untuk setiap commodity
             $commodities = $commodities->map(function ($commodity) {
-                $commodity->photo_url = $commodity->photo ? url(ltrim($commodity->photo, '/')) : null;
+                $commodity->photo_url = $commodity->photo_url;
                 return $commodity;
             });
 
@@ -267,7 +267,7 @@ class AsetController extends Controller
                     'tahun' => $commodity->tahun,
                     'deskripsi' => $commodity->deskripsi,
                     'harga_satuan' => $commodity->harga_satuan,
-                    'photo_url' => $commodity->photo ? url('api/public-storage/' . str_replace('public/', '', $commodity->photo)) : null,
+                    'photo_url' => $commodity->photo_url,
                 ];
             });
 

@@ -19,6 +19,9 @@ import 'admin/admin_classes_screen.dart';
 import 'student/checkout_screen.dart';
 import 'widgets/navigation_drawer.dart';
 import 'widgets/bottom_navigation.dart';
+import 'theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 void main() {
   runApp(const MyApp());
@@ -40,49 +43,11 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ClassProvider()),
       ],
       child: MaterialApp(
-        title: 'Asset Borrowing App',
+        title: '4llAset',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF1E88E5),
-            brightness: Brightness.light,
-          ),
-          fontFamily: 'Poppins',
-          appBarTheme: const AppBarTheme(
-            centerTitle: true,
-            elevation: 0,
-          ),
-          cardTheme: CardThemeData(
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-          ),
-          inputDecorationTheme: InputDecorationTheme(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            filled: true,
-            fillColor: Colors.grey[50],
-          ),
-        ),
-        darkTheme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF1E88E5),
-            brightness: Brightness.dark,
-          ),
-          useMaterial3: true,
-          fontFamily: 'Poppins',
+        theme: AppTheme.lightTheme,
+        darkTheme: ThemeData.dark().copyWith(
+          textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
         ),
         themeMode: ThemeMode.system,
         home: const AuthWrapper(),
@@ -122,36 +87,45 @@ class _AuthWrapperState extends State<AuthWrapper> {
   @override
   void initState() {
     super.initState();
-    print('AuthWrapper.initState: Initializing auth wrapper');
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      print('AuthWrapper.initState: Post frame callback, checking auth status');
       context.read<AuthProvider>().checkAuthStatus();
-      // Load cart after authentication check
       context.read<BorrowingProvider>().loadCart();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    print('AuthWrapper.build: Building auth wrapper');
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
-        print('AuthWrapper.build: Auth provider state - isLoading: ${authProvider.isLoading}, isAuthenticated: ${authProvider.isAuthenticated}');
         if (authProvider.isLoading) {
-          print('AuthWrapper.build: Showing loading screen');
-          return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
+          return Scaffold(
+            body: Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), shape: BoxShape.circle),
+                    child: const FaIcon(FontAwesomeIcons.shieldHalved, color: Colors.white, size: 48),
+                  ),
+                  const SizedBox(height: 32),
+                  Text('4LL ASET', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 24, letterSpacing: 4)),
+                  const SizedBox(height: 8),
+                  Text('Mengamankan Infrastruktur...', style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12, letterSpacing: 1)),
+                  const SizedBox(height: 48),
+                  const SizedBox(width: 40, height: 40, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
+                ],
+              ),
             ),
           );
         }
 
         if (authProvider.isAuthenticated) {
-          print('AuthWrapper.build: User authenticated, showing main screen');
           return const MainScreen();
         }
 
-        print('AuthWrapper.build: User not authenticated, showing login screen');
         return const LoginScreen();
       },
     );
@@ -185,14 +159,10 @@ class _MainScreenState extends State<MainScreen> {
     final navigationProvider = context.watch<NavigationProvider>();
     final userRole = authProvider.user?.role;
 
-    // Use Drawer for officers and admins, BottomNavigation for students
     final useDrawer = userRole == 'officers' || userRole == 'admin';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Asset Borrowing App'),
-        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-      ),
+      backgroundColor: const Color(0xFFF1F5F9),
       drawer: useDrawer ? const AppNavigationDrawer() : null,
       body: _screens[navigationProvider.selectedIndex],
       bottomNavigationBar: useDrawer
@@ -201,11 +171,22 @@ class _MainScreenState extends State<MainScreen> {
               currentIndex: navigationProvider.selectedIndex,
               onTap: (index) => navigationProvider.setSelectedIndex(index),
             ),
-      floatingActionButton: navigationProvider.selectedIndex == 0 // Dashboard
-          ? FloatingActionButton(
-              onPressed: () => Navigator.of(context).pushNamed('/borrowing-create'),
-              tooltip: 'Create New Borrowing',
-              child: const Icon(Icons.add),
+      floatingActionButton: navigationProvider.selectedIndex == 1 && userRole == 'students'
+          ? Container(
+              height: 64, width: 64,
+              decoration: BoxDecoration(
+                gradient: AppTheme.primaryGradient,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [BoxShadow(color: AppTheme.primaryBlue.withValues(alpha: 0.4), blurRadius: 20, offset: const Offset(0, 8))],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => Navigator.of(context).pushNamed('/borrowing-create'),
+                  borderRadius: BorderRadius.circular(20),
+                  child: const FaIcon(FontAwesomeIcons.plus, color: Colors.white, size: 24),
+                ),
+              ),
             )
           : null,
     );

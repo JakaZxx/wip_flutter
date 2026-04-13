@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -60,7 +60,7 @@ class BugReportService {
     if (response.statusCode == 200) {
       final responseJson = jsonDecode(responseData);
       if (responseJson['success'] == true) {
-        print('Bug report submitted successfully');
+        debugPrint('Bug report submitted successfully');
       } else {
         throw Exception('Failed to submit bug report: ${responseJson['message']}');
       }

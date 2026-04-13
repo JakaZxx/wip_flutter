@@ -9,6 +9,7 @@ use Illuminate\Http\Request; // Mengimpor Request
 use Illuminate\Support\Facades\Hash; // Mengimpor Hash untuk password
 use Illuminate\Support\Facades\Validator; // Mengimpor Validator
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -152,7 +153,7 @@ class UserController extends Controller
             // Validasi input
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:users,email',
+                'email' => 'required|string|max:255|unique:users,email',
                 'password' => 'required|string|min:8',
                 'role' => 'required|string|in:admin,officers,students',
                 'school_class_id' => 'required_if:role,students|exists:school_classes,id',
@@ -227,7 +228,7 @@ class UserController extends Controller
             // Validasi input, email unique kecuali untuk user ini
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:users,email,' . $id,
+                'email' => 'required|string|max:255|unique:users,email,' . $id, // Relaxed email format
                 'password' => 'nullable|string|min:8',
                 'role' => 'nullable|string|in:admin,officers,students',
                 'jurusan' => 'nullable|string|max:255',

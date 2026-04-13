@@ -89,6 +89,7 @@ class Borrowing {
   String get studentName => student?.name ?? '-';
   String get studentClassName => student?.schoolClassName ?? '-';
   String get returnedByUserName => returnedByUser?.name ?? student?.name ?? '-';
+  String? get userName => student?.name;
 
   // Get return photos from items
   List<Map<String, String>> get returnPhotos {

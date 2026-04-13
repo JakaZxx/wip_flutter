@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/borrowing.dart';
 import '../models/borrowing_item.dart';
@@ -13,11 +15,6 @@ class BorrowingProvider with ChangeNotifier {
   bool _isLoading = false;
   bool _isSavingCart = false;
   String? _error;
-
-  // Debounce variables (removed as we now save immediately)
-  // Map<int, int> _pendingUpdates = {};
-  // Timer? _cartSaveTimer;
-  // static const Duration _cartSaveDebounce = Duration(milliseconds: 500);
 
   List<Borrowing> get borrowings => _borrowings;
   List<BorrowingItem> get cartItems => _cartItems;
@@ -91,7 +88,7 @@ class BorrowingProvider with ChangeNotifier {
     }
 
     try {
-      print(
+      debugPrint(
         'BorrowingProvider.fetchBorrowings: Fetching with filters - search: $_searchQuery, status: $_statusFilter, jurusan: $_jurusanFilter, class: $_classFilter, page: $_currentPage',
       );
       final result = await _apiService.getBorrowings(
@@ -108,12 +105,12 @@ class BorrowingProvider with ChangeNotifier {
       _lastPage = (result['last_page'] as int?) ?? 1;
       _total = (result['total'] as int?) ?? _borrowings.length;
 
-      print(
+      debugPrint(
         'BorrowingProvider.fetchBorrowings: Successfully fetched ${_borrowings.length} borrowings (page $_currentPage of $_lastPage, total $_total)',
       );
     } catch (e, stackTrace) {
-      print('BorrowingProvider.fetchBorrowings: Exception occurred: $e');
-      print('BorrowingProvider.fetchBorrowings: Stack trace: $stackTrace');
+      debugPrint('BorrowingProvider.fetchBorrowings: Exception occurred: $e');
+      debugPrint('BorrowingProvider.fetchBorrowings: Stack trace: $stackTrace');
       _error = e.toString();
     } finally {
       if (!silent) {
@@ -124,7 +121,7 @@ class BorrowingProvider with ChangeNotifier {
   }
 
   Future<void> createBorrowing(Map<String, dynamic> borrowingData) async {
-    print(
+    debugPrint(
       'BorrowingProvider.createBorrowing: Starting to create borrowing with data: $borrowingData',
     );
     _isLoading = true;
@@ -132,7 +129,7 @@ class BorrowingProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      print(
+      debugPrint(
         'BorrowingProvider.createBorrowing: Calling ApiService.createBorrowing',
       );
       final newBorrowing = await _apiService.createBorrowing(borrowingData);
@@ -141,13 +138,13 @@ class BorrowingProvider with ChangeNotifier {
       _cartItems.clear();
       // Reload cart to ensure synchronization with server
       await loadCart();
-      print(
+      debugPrint(
         'BorrowingProvider.createBorrowing: Successfully created borrowing with ID: ${newBorrowing.id} and cart reloaded',
       );
       notifyListeners();
     } catch (e, stackTrace) {
-      print('BorrowingProvider.createBorrowing: Exception occurred: $e');
-      print('BorrowingProvider.createBorrowing: Stack trace: $stackTrace');
+      debugPrint('BorrowingProvider.createBorrowing: Exception occurred: $e');
+      debugPrint('BorrowingProvider.createBorrowing: Stack trace: $stackTrace');
       _error = e.toString();
       notifyListeners();
     } finally {
@@ -156,11 +153,11 @@ class BorrowingProvider with ChangeNotifier {
   }
 
   Future<void> updateBorrowingStatus(int borrowingId, String status) async {
-    print(
+    debugPrint(
       'BorrowingProvider.updateBorrowingStatus: Updating borrowing $borrowingId to status: $status',
     );
     try {
-      print(
+      debugPrint(
         'BorrowingProvider.updateBorrowingStatus: Calling ApiService.updateBorrowingStatus',
       );
       final updatedBorrowing = await _apiService.updateBorrowingStatus(
@@ -170,18 +167,18 @@ class BorrowingProvider with ChangeNotifier {
       final index = _borrowings.indexWhere((b) => b.id == borrowingId);
       if (index != -1) {
         _borrowings[index] = updatedBorrowing;
-        print(
+        debugPrint(
           'BorrowingProvider.updateBorrowingStatus: Successfully updated borrowing status',
         );
         notifyListeners();
       } else {
-        print(
+        debugPrint(
           'BorrowingProvider.updateBorrowingStatus: Borrowing with ID $borrowingId not found in local list',
         );
       }
     } catch (e, stackTrace) {
-      print('BorrowingProvider.updateBorrowingStatus: Exception occurred: $e');
-      print(
+      debugPrint('BorrowingProvider.updateBorrowingStatus: Exception occurred: $e');
+      debugPrint(
         'BorrowingProvider.updateBorrowingStatus: Stack trace: $stackTrace',
       );
       _error = e.toString();
@@ -193,32 +190,48 @@ class BorrowingProvider with ChangeNotifier {
     int borrowingId,
     Map<String, dynamic> returnData,
   ) async {
-    print(
+    debugPrint(
       'BorrowingProvider.returnBorrowing: Returning borrowing $borrowingId with data: $returnData',
     );
     try {
-      print(
+      // 1. Upload photo if present
+      Map<String, dynamic> apiData = Map.from(returnData);
+      if (returnData['return_photo'] != null) {
+        if (returnData['return_photo'] is XFile) {
+          final imageFile = returnData['return_photo'] as XFile;
+          final bytes = await imageFile.readAsBytes();
+          final photoPath = await _apiService.uploadBytes(bytes, imageFile.name, 'file');
+          apiData['return_photo'] = photoPath;
+        } else if (returnData['return_photo'] is File) {
+          final file = returnData['return_photo'] as File;
+          final bytes = await file.readAsBytes();
+          final photoPath = await _apiService.uploadBytes(bytes, file.path.split('/').last, 'file');
+          apiData['return_photo'] = photoPath;
+        }
+      }
+
+      debugPrint(
         'BorrowingProvider.returnBorrowing: Calling ApiService.returnBorrowing',
       );
       final updatedBorrowing = await _apiService.returnBorrowing(
         borrowingId,
-        returnData,
+        apiData,
       );
       final index = _borrowings.indexWhere((b) => b.id == borrowingId);
       if (index != -1) {
         _borrowings[index] = updatedBorrowing;
-        print(
+        debugPrint(
           'BorrowingProvider.returnBorrowing: Successfully returned borrowing',
         );
         notifyListeners();
       } else {
-        print(
+        debugPrint(
           'BorrowingProvider.returnBorrowing: Borrowing with ID $borrowingId not found in local list',
         );
       }
     } catch (e, stackTrace) {
-      print('BorrowingProvider.returnBorrowing: Exception occurred: $e');
-      print('BorrowingProvider.returnBorrowing: Stack trace: $stackTrace');
+      debugPrint('BorrowingProvider.returnBorrowing: Exception occurred: $e');
+      debugPrint('BorrowingProvider.returnBorrowing: Stack trace: $stackTrace');
       _error = e.toString();
       notifyListeners();
     }
@@ -229,7 +242,7 @@ class BorrowingProvider with ChangeNotifier {
     int itemId,
     Map<String, dynamic> returnData,
   ) async {
-    print(
+    debugPrint(
       'BorrowingProvider.returnBorrowingItem: Returning item $itemId in borrowing $borrowingId',
     );
     try {
@@ -249,7 +262,7 @@ class BorrowingProvider with ChangeNotifier {
         'return_photo': photoPath, // Send the path as a string
       };
 
-      print(
+      debugPrint(
         'BorrowingProvider.returnBorrowingItem: Calling ApiService.returnBorrowingItem with data: $apiData',
       );
 
@@ -263,18 +276,18 @@ class BorrowingProvider with ChangeNotifier {
       final index = _borrowings.indexWhere((b) => b.id == borrowingId);
       if (index != -1) {
         _borrowings[index] = updatedBorrowing;
-        print(
+        debugPrint(
           'BorrowingProvider.returnBorrowingItem: Successfully returned borrowing item',
         );
         notifyListeners();
       } else {
-        print(
+        debugPrint(
           'BorrowingProvider.returnBorrowingItem: Borrowing with ID $borrowingId not found in local list',
         );
       }
     } catch (e, stackTrace) {
-      print('BorrowingProvider.returnBorrowingItem: Exception occurred: $e');
-      print('BorrowingProvider.returnBorrowingItem: Stack trace: $stackTrace');
+      debugPrint('BorrowingProvider.returnBorrowingItem: Exception occurred: $e');
+      debugPrint('BorrowingProvider.returnBorrowingItem: Stack trace: $stackTrace');
       _error = e.toString();
       notifyListeners();
       rethrow; // Re-throw the exception to be caught by the UI
@@ -282,7 +295,7 @@ class BorrowingProvider with ChangeNotifier {
   }
 
   Future<void> approveBorrowingItems(int borrowingId, List<int> itemIds) async {
-    print(
+    debugPrint(
       'BorrowingProvider.approveBorrowingItems: Approving items $itemIds for borrowing $borrowingId',
     );
     try {
@@ -293,18 +306,18 @@ class BorrowingProvider with ChangeNotifier {
       final index = _borrowings.indexWhere((b) => b.id == borrowingId);
       if (index != -1) {
         _borrowings[index] = updatedBorrowing;
-        print(
+        debugPrint(
           'BorrowingProvider.approveBorrowingItems: Successfully approved items',
         );
         notifyListeners();
       } else {
-        print(
+        debugPrint(
           'BorrowingProvider.approveBorrowingItems: Borrowing with ID $borrowingId not found in local list',
         );
       }
     } catch (e, stackTrace) {
-      print('BorrowingProvider.approveBorrowingItems: Exception occurred: $e');
-      print(
+      debugPrint('BorrowingProvider.approveBorrowingItems: Exception occurred: $e');
+      debugPrint(
         'BorrowingProvider.approveBorrowingItems: Stack trace: $stackTrace',
       );
       _error = e.toString();
@@ -313,7 +326,7 @@ class BorrowingProvider with ChangeNotifier {
   }
 
   Future<void> rejectBorrowingItems(int borrowingId, List<int> itemIds) async {
-    print(
+    debugPrint(
       'BorrowingProvider.rejectBorrowingItems: Rejecting items $itemIds for borrowing $borrowingId',
     );
     try {
@@ -324,18 +337,18 @@ class BorrowingProvider with ChangeNotifier {
       final index = _borrowings.indexWhere((b) => b.id == borrowingId);
       if (index != -1) {
         _borrowings[index] = updatedBorrowing;
-        print(
+        debugPrint(
           'BorrowingProvider.rejectBorrowingItems: Successfully rejected items',
         );
         notifyListeners();
       } else {
-        print(
+        debugPrint(
           'BorrowingProvider.rejectBorrowingItems: Borrowing with ID $borrowingId not found in local list',
         );
       }
     } catch (e, stackTrace) {
-      print('BorrowingProvider.rejectBorrowingItems: Exception occurred: $e');
-      print('BorrowingProvider.rejectBorrowingItems: Stack trace: $stackTrace');
+      debugPrint('BorrowingProvider.rejectBorrowingItems: Exception occurred: $e');
+      debugPrint('BorrowingProvider.rejectBorrowingItems: Stack trace: $stackTrace');
       _error = e.toString();
       notifyListeners();
     }
@@ -347,7 +360,7 @@ class BorrowingProvider with ChangeNotifier {
     String? condition,
     String? description,
   }) async {
-    print(
+    debugPrint(
       'BorrowingProvider.addToCart: Adding to cart commodityId: $commodityId, quantity: $quantity',
     );
     try {
@@ -395,17 +408,17 @@ class BorrowingProvider with ChangeNotifier {
       // Save cart immediately
       await saveCart();
       notifyListeners();
-      print('BorrowingProvider.addToCart: Cart updated and saved');
+      debugPrint('BorrowingProvider.addToCart: Cart updated and saved');
     } catch (e, stackTrace) {
-      print('BorrowingProvider.addToCart: Exception occurred: $e');
-      print('BorrowingProvider.addToCart: Stack trace: $stackTrace');
+      debugPrint('BorrowingProvider.addToCart: Exception occurred: $e');
+      debugPrint('BorrowingProvider.addToCart: Stack trace: $stackTrace');
       _error = 'Gagal menambahkan ke keranjang: $e';
       notifyListeners();
     }
   }
 
   Future<void> removeFromCart(int commodityId) async {
-    print(
+    debugPrint(
       'BorrowingProvider.removeFromCart: Removing from cart commodityId: $commodityId',
     );
     try {
@@ -414,17 +427,17 @@ class BorrowingProvider with ChangeNotifier {
       // Save cart immediately
       await saveCart();
       notifyListeners();
-      print('BorrowingProvider.removeFromCart: Cart updated and saved');
+      debugPrint('BorrowingProvider.removeFromCart: Cart updated and saved');
     } catch (e, stackTrace) {
-      print('BorrowingProvider.removeFromCart: Exception occurred: $e');
-      print('BorrowingProvider.removeFromCart: Stack trace: $stackTrace');
+      debugPrint('BorrowingProvider.removeFromCart: Exception occurred: $e');
+      debugPrint('BorrowingProvider.removeFromCart: Stack trace: $stackTrace');
       _error = 'Gagal menghapus dari keranjang: $e';
       notifyListeners();
     }
   }
 
   Future<void> updateCartItemQuantity(int commodityId, int quantity) async {
-    print(
+    debugPrint(
       'BorrowingProvider.updateCartItemQuantity: Updating cart item commodityId: $commodityId, quantity: $quantity',
     );
     try {
@@ -470,10 +483,10 @@ class BorrowingProvider with ChangeNotifier {
       // Save cart immediately
       await saveCart();
       notifyListeners();
-      print('BorrowingProvider.updateCartItemQuantity: Cart updated and saved');
+      debugPrint('BorrowingProvider.updateCartItemQuantity: Cart updated and saved');
     } catch (e, stackTrace) {
-      print('BorrowingProvider.updateCartItemQuantity: Exception occurred: $e');
-      print(
+      debugPrint('BorrowingProvider.updateCartItemQuantity: Exception occurred: $e');
+      debugPrint(
         'BorrowingProvider.updateCartItemQuantity: Stack trace: $stackTrace',
       );
       _error = 'Gagal memperbarui jumlah item: $e';
@@ -482,15 +495,15 @@ class BorrowingProvider with ChangeNotifier {
   }
 
   Future<void> clearCart() async {
-    print('BorrowingProvider.clearCart: Clearing cart');
+    debugPrint('BorrowingProvider.clearCart: Clearing cart');
     try {
       await _apiService.clearCart();
       _cartItems.clear();
-      print('BorrowingProvider.clearCart: Successfully cleared cart');
+      debugPrint('BorrowingProvider.clearCart: Successfully cleared cart');
       notifyListeners();
     } catch (e, stackTrace) {
-      print('BorrowingProvider.clearCart: Exception occurred: $e');
-      print('BorrowingProvider.clearCart: Stack trace: $stackTrace');
+      debugPrint('BorrowingProvider.clearCart: Exception occurred: $e');
+      debugPrint('BorrowingProvider.clearCart: Stack trace: $stackTrace');
       _error = 'Gagal membersihkan keranjang: $e';
       notifyListeners();
     }
@@ -501,7 +514,7 @@ class BorrowingProvider with ChangeNotifier {
       _cartItems = await _apiService.getCart();
       notifyListeners();
     } catch (e) {
-      print('BorrowingProvider.loadCart: Failed to load cart: $e');
+      debugPrint('BorrowingProvider.loadCart: Failed to load cart: $e');
       _error = 'Gagal memuat keranjang';
       notifyListeners();
     }
@@ -509,7 +522,7 @@ class BorrowingProvider with ChangeNotifier {
 
   Future<void> saveCart() async {
     if (_isSavingCart) {
-      print('BorrowingProvider.saveCart: Already saving cart, skipping...');
+      debugPrint('BorrowingProvider.saveCart: Already saving cart, skipping...');
       return;
     }
 
@@ -526,7 +539,7 @@ class BorrowingProvider with ChangeNotifier {
             },
           )
           .toList();
-      print(
+      debugPrint(
         'BorrowingProvider.saveCart: Attempting to save cart with ${items.length} items: $items',
       );
       if (items.isNotEmpty) {
@@ -536,11 +549,11 @@ class BorrowingProvider with ChangeNotifier {
         await _apiService.saveCart([]);
         _cartItems.clear();
       }
-      print('BorrowingProvider.saveCart: Cart saved successfully');
+      debugPrint('BorrowingProvider.saveCart: Cart saved successfully');
     } catch (e, stackTrace) {
-      print('BorrowingProvider.saveCart: Failed to save cart: $e');
-      print('BorrowingProvider.saveCart: Stack trace: $stackTrace');
-      print(
+      debugPrint('BorrowingProvider.saveCart: Failed to save cart: $e');
+      debugPrint('BorrowingProvider.saveCart: Stack trace: $stackTrace');
+      debugPrint(
         'BorrowingProvider.saveCart: Cart items at time of error: $_cartItems',
       );
       _error = 'Gagal menyimpan keranjang: $e';

@@ -611,7 +611,7 @@
                     @if ($borrowing->items->where('status', 'pending')->count() > 0)
                         <button type="button" onclick="openApproveModal({{ $borrowing->id }})">Setujui</button>
                         <button type="button" onclick="openRejectModal({{ $borrowing->id }})" class="rejected">Tolak</button>
-                    @elseif ($borrowing->status === 'approved' || $borrowing->status === 'partially_approved')
+                    @elseif ($borrowing->items->where('status', 'approved')->count() > 0)
                         <form action="@php
                             if (auth()->user()->isAdmin()) {
                                 echo route('borrowings.return.admin', $borrowing->id);
@@ -622,7 +622,7 @@
                             @csrf
                             <button type="submit">Kembalikan</button>
                         </form>
-                    @elseif ($borrowing->status === 'returned' || $borrowing->status === 'partially_returned')
+                    @elseif ($borrowing->status === 'returned' || $borrowing->status === 'partially_returned' || ($borrowing->items->where('status', 'returned')->count() > 0 && $borrowing->items->where('status', 'approved')->count() == 0))
                         <span>Sudah Dikembalikan</span>
                     @elseif ($borrowing->status === 'rejected')
                         <span class="rejected">Ditolak</span>

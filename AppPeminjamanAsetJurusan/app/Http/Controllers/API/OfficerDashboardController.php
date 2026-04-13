@@ -89,16 +89,27 @@ class OfficerDashboardController extends Controller
                 'success' => true,
                 'message' => 'Officer dashboard statistics retrieved successfully',
                 'data' => [
-                    'active_borrowings' => $activeBorrowingsCount,
-                    'overdue_borrowings' => $overdueBorrowingsCount,
+                    'active_borrowings_count' => $activeBorrowingsCount,
+                    'overdue_borrowings_count' => $overdueBorrowingsCount,
                     'total_assets' => $totalAssetsCount,
-                    'pending_requests' => $pendingRequestsCount,
+                    'pending_requests_count' => $pendingRequestsCount,
                     'approved_today' => $approvedToday,
                     'total_borrowings' => $totalBorrowings,
                     'asset_status' => $assetStatus,
                     'recent_activities' => $recentActivities,
-                    'new_requests' => $newRequests,
-                    'due_soon' => $dueSoonBorrowings,
+                    'new_requests' => $newRequests->map(function($b) {
+                        return [
+                            'student_name' => $b->student->user->name ?? 'Student',
+                            'items_summary' => $b->items->map(fn($i) => ($i->commodity->name ?? 'Item') . ' (x' . $i->quantity . ')')->implode(', '),
+                        ];
+                    }),
+                    'rejected_borrowings_count' => Borrowing::where('status', 'rejected')
+                        ->whereHas('items.commodity', fn($q) => $q->where('jurusan', $jurusan))
+                        ->count(),
+                    'returned_borrowings_count' => Borrowing::where('status', 'returned')
+                        ->whereHas('items.commodity', fn($q) => $q->where('jurusan', $jurusan))
+                        ->count(),
+                    'due_soon' => $due_soon_borrowings,
                 ]
             ]);
         } catch (\Exception $e) {

@@ -13,6 +13,8 @@ use App\Notifications\VerifyEmail;
 class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable;
+    
+    protected $appends = ['profile_picture_url'];
 
     protected $fillable = [
         'name',
@@ -50,8 +52,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'last_seen_notifications' => 'datetime',
     ];
 
-    protected $appends = ['profile_picture_url'];
-
     /**
      * Relasi ke tabel students
      */
@@ -65,8 +65,35 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getProfilePictureUrlAttribute()
     {
-        if ($this->profile_picture && file_exists(public_path('storage/' . $this->profile_picture))) {
-            return asset('storage/' . $this->profile_picture);
+        if ($this->profile_picture) {
+            $path = $this->profile_picture;
+            
+            // If it's a full URL, return it
+            if (filter_var($path, FILTER_VALIDATE_URL)) {
+                return $path;
+            }
+
+            // Clean up common incorrect prefixes if they exist in DB
+            $path = str_replace(['public/', '/storage/', 'storage/', 'profiles/'], '', $path);
+            $path = ltrim($path, '/');
+
+            // Check existence in storage link (profiles/ subdirectory)
+            if (file_exists(public_path('storage/profiles/' . $path))) {
+                return asset('storage/profiles/' . $path);
+            }
+            
+            // Link directly to storage/ (no profiles/)
+            if (file_exists(public_path('storage/' . $path))) {
+                return asset('storage/' . $path);
+            }
+            
+            // Check legacy path
+            if (file_exists(public_path('uploads/profile_pictures/' . $path))) {
+                return asset('uploads/profile_pictures/' . $path);
+            }
+            
+            // Fallback: use the custom storage route if nothing else works
+            return url('/public-storage/profiles/' . $path);
         }
         return asset('uploads/profile_pictures/default.png');
     }
