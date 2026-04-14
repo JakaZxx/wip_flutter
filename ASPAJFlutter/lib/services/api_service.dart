@@ -118,7 +118,16 @@ class ApiService {
 
   // Logout
   Future<void> logout() async {
-    await _removeToken();
+    try {
+      await http.post(
+        Uri.parse('$baseUrl/logout'),
+        headers: await _getHeaders(),
+      );
+    } catch (e) {
+      debugPrint('ApiService.logout: Error calling backend logout: $e');
+    } finally {
+      await _removeToken();
+    }
   }
 
   // Get current user

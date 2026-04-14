@@ -70,4 +70,31 @@ class AuthController extends Controller
             ], 500);
         }
     }
+    /**
+     * Handle logout request
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function logout(Request $request)
+    {
+        Log::info('AuthController::logout started');
+        try {
+            // Revoke the token that was used to authenticate the current request
+            $request->user()->currentAccessToken()->delete();
+            
+            Log::info('AuthController::logout ended successfully');
+            return response()->json([
+                'success' => true,
+                'message' => 'Logged out successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('AuthController::logout error', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            Log::info('AuthController::logout ended with error');
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred during logout'
+            ], 500);
+        }
+    }
 }
