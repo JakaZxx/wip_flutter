@@ -34,15 +34,59 @@ class ChartData {
 }
 
 class RecentRequest {
+  final int id;
   final String studentName;
-  final String itemsSummary;
+  final String? status;
+  final DateTime? createdAt;
+  final List<String> items;
 
-  RecentRequest({required this.studentName, required this.itemsSummary});
+  RecentRequest({
+    required this.id,
+    required this.studentName,
+    this.status,
+    this.createdAt,
+    required this.items,
+  });
 
   factory RecentRequest.fromJson(Map<String, dynamic> json) {
+    var itemsList = <String>[];
+    if (json['items'] != null) {
+      for (var item in json['items']) {
+        itemsList.add(item['commodity_name'] ?? 'Unknown');
+      }
+    }
     return RecentRequest(
-      studentName: json['student_name'] ?? 'Unknown',
-      itemsSummary: json['items_summary'] ?? '',
+      id: json['id'] ?? 0,
+      studentName: json['student']?['user']?['name'] ?? json['student_name'] ?? 'Unknown',
+      status: json['status'],
+      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
+      items: itemsList,
+    );
+  }
+}
+
+class RecentUser {
+  final int id;
+  final String name;
+  final String email;
+  final String role;
+  final DateTime? createdAt;
+
+  RecentUser({
+    required this.id,
+    required this.name,
+    required this.email,
+    required this.role,
+    this.createdAt,
+  });
+
+  factory RecentUser.fromJson(Map<String, dynamic> json) {
+    return RecentUser(
+      id: json['id'] ?? 0,
+      name: json['name'] ?? 'Unknown',
+      email: json['email'] ?? '',
+      role: json['role'] ?? '',
+      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
     );
   }
 }
@@ -60,7 +104,8 @@ class DashboardStats {
   final int? overdueBorrowingsCount;
   final int? rejectedBorrowingsCount;
   final int? returnedBorrowingsCount;
-  final List<RecentRequest>? newRequests;
+  final List<RecentRequest>? recentBorrowings;
+  final List<RecentUser>? recentUsers;
   final int? totalAvailableAssets;
   final int? myActiveBorrowingsCount;
   final int? pendingBorrowingsCount;
@@ -80,7 +125,8 @@ class DashboardStats {
     this.overdueBorrowingsCount,
     this.rejectedBorrowingsCount,
     this.returnedBorrowingsCount,
-    this.newRequests,
+    this.recentBorrowings,
+    this.recentUsers,
     this.totalAvailableAssets,
     this.myActiveBorrowingsCount,
     this.pendingBorrowingsCount,
@@ -100,16 +146,19 @@ class DashboardStats {
       userGrowth: json['user_growth'] != null ? ChartData.fromJson(json['user_growth']) : null,
       assetDistribution: json['asset_distribution'] as Map<String, dynamic>?,
       assetStatus: json['asset_status'] as Map<String, dynamic>?,
+      recentUsers: (json['recent_users'] as List<dynamic>?)
+          ?.map((e) => RecentUser.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      recentBorrowings: (json['recent_borrowings'] as List<dynamic>?)
+          ?.map((e) => RecentRequest.fromJson(e as Map<String, dynamic>))
+          .toList(),
 
       // Officer
       activeBorrowingsCount: _parseInt(json['active_borrowings_count']),
-      pendingRequestsCount: _parseInt(json['pending_requests_count']),
+      pendingRequestsCount: _parseInt(json['pending_approvals_count'] ?? json['pending_requests_count']),
       overdueBorrowingsCount: _parseInt(json['overdue_borrowings_count']),
       rejectedBorrowingsCount: _parseInt(json['rejected_borrowings_count']),
       returnedBorrowingsCount: _parseInt(json['returned_borrowings_count']),
-      newRequests: (json['new_requests'] as List<dynamic>?)
-          ?.map((e) => RecentRequest.fromJson(e as Map<String, dynamic>))
-          .toList(),
 
       // Student
       totalAvailableAssets: _parseInt(json['total_available_assets']),

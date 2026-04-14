@@ -106,7 +106,7 @@ class _CreateUserFormState extends State<CreateUserForm> {
       widget.onSuccess();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('User "${_nameController.text}" has been registered successfully'),
+          content: Text('Pengguna "${_nameController.text}" telah berhasil didaftarkan'),
           backgroundColor: const Color(0xFF10B981),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -144,20 +144,20 @@ class _CreateUserFormState extends State<CreateUserForm> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildSectionTitle('BASIC IDENTITY'),
+                      _buildSectionTitle('IDENTITAS DASAR'),
                       const SizedBox(height: 16),
                       _buildInputField(
                         controller: _nameController,
-                        label: 'FULL NAME',
-                        hint: 'Enter user full name...',
+                        label: 'NAMA LENGKAP',
+                        hint: 'Masukkan nama lengkap pengguna...',
                         icon: Icons.person_rounded,
                         validator: (v) => v == null || v.trim().isEmpty ? 'Nama wajib diisi' : null,
                       ),
                       const SizedBox(height: 16),
                       _buildInputField(
                         controller: _emailController,
-                        label: 'EMAIL OR IDENTIFIER',
-                        hint: 'example@aspaj.com or NIS',
+                        label: 'EMAIL ATAU IDENTIFIKASI',
+                        hint: 'contoh@aspaj.com atau NIS',
                         icon: Icons.alternate_email_rounded,
                         keyboardType: TextInputType.emailAddress,
                         validator: (v) {
@@ -169,18 +169,18 @@ class _CreateUserFormState extends State<CreateUserForm> {
                         },
                       ),
                       const SizedBox(height: 24),
-                      _buildSectionTitle('ACCESS CONTROL'),
+                      _buildSectionTitle('KONTROL AKSES'),
                       const SizedBox(height: 16),
                       _buildRoleDropdown(),
                       const SizedBox(height: 16),
                       _buildDynamicFields(),
                       const SizedBox(height: 24),
-                      _buildSectionTitle('SECURE CREDENTIALS'),
+                      _buildSectionTitle('KREDENSIAL KEAMANAN'),
                       const SizedBox(height: 16),
                       _buildInputField(
                         controller: _passwordController,
-                        label: 'PASSWORD',
-                        hint: widget.userToEdit != null ? 'Biarkan kosong jika tidak diubah' : 'Minimum 8 characters',
+                        label: 'KATA SANDI',
+                        hint: widget.userToEdit != null ? 'Biarkan kosong jika tidak diubah' : 'Minimal 8 karakter',
                         icon: Icons.lock_outline_rounded,
                         isPassword: true,
                         validator: (v) {
@@ -192,8 +192,8 @@ class _CreateUserFormState extends State<CreateUserForm> {
                       const SizedBox(height: 16),
                       _buildInputField(
                         controller: _confirmPasswordController,
-                        label: 'CONFIRM PASSWORD',
-                        hint: 'Repeat your password',
+                        label: 'KONFIRMASI KATA SANDI',
+                        hint: 'Ulangi kata sandi Anda',
                         icon: Icons.lock_reset_rounded,
                         isPassword: true,
                         validator: (v) => v != _passwordController.text ? 'Password tidak cocok' : null,
@@ -237,7 +237,7 @@ class _CreateUserFormState extends State<CreateUserForm> {
               ),
               const SizedBox(width: 16),
               Text(
-                'Registration Hub',
+                'Pusat Registrasi',
                 style: GoogleFonts.outfit(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -248,7 +248,7 @@ class _CreateUserFormState extends State<CreateUserForm> {
           ),
           const SizedBox(height: 8),
           Text(
-            widget.userToEdit != null ? 'Update existing user account information.' : 'Create a new user account with specified platform roles.',
+             widget.userToEdit != null ? 'Perbarui informasi akun pengguna yang sudah ada.' : 'Buat akun pengguna baru dengan peran platform yang ditentukan.',
             style: GoogleFonts.poppins(
               fontSize: 12,
               color: Colors.white70,
@@ -316,11 +316,11 @@ class _CreateUserFormState extends State<CreateUserForm> {
         fontWeight: FontWeight.w600,
         color: const Color(0xFF1E293B),
       ),
-      decoration: AppTheme.premiumInputDecoration('Select Platform Role', Icons.badge_outlined),
+      decoration: AppTheme.premiumInputDecoration('Pilih Peran Platform', Icons.badge_outlined),
       items: const [
         DropdownMenuItem(value: 'admin', child: Text('ADMINISTRATOR')),
-        DropdownMenuItem(value: 'officers', child: Text('OFFICER')),
-        DropdownMenuItem(value: 'students', child: Text('STUDENT')),
+        DropdownMenuItem(value: 'officers', child: Text('PETUGAS')),
+        DropdownMenuItem(value: 'students', child: Text('SISWA')),
       ],
       onChanged: _onRoleChanged,
       validator: (v) => v == null ? 'Role wajib dipilih' : null,
@@ -336,7 +336,7 @@ class _CreateUserFormState extends State<CreateUserForm> {
           fontWeight: FontWeight.w600,
           color: const Color(0xFF1E293B),
         ),
-        decoration: AppTheme.premiumInputDecoration('Select Department', Icons.business_rounded),
+        decoration: AppTheme.premiumInputDecoration('Pilih Jurusan', Icons.business_rounded),
         items: _jurusanOptions.map((j) => DropdownMenuItem(value: j, child: Text(j))).toList(),
         onChanged: (v) => setState(() => _selectedJurusan = v),
         validator: (v) => v == null ? 'Jurusan wajib dipilih' : null,
@@ -354,7 +354,7 @@ class _CreateUserFormState extends State<CreateUserForm> {
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1E293B),
             ),
-            decoration: AppTheme.premiumInputDecoration('Select assigned class', Icons.class_rounded),
+            decoration: AppTheme.premiumInputDecoration('Pilih kelas yang ditentukan', Icons.class_rounded),
             items: cp.classes.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))).toList(),
             onChanged: (v) => setState(() => _selectedClassId = v),
             validator: (v) => v == null ? 'Kelas wajib dipilih' : null,
@@ -377,7 +377,7 @@ class _CreateUserFormState extends State<CreateUserForm> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
             child: Text(
-              'CANCEL',
+              'BATAL',
               style: GoogleFonts.outfit(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -414,7 +414,7 @@ class _CreateUserFormState extends State<CreateUserForm> {
                   child: up.isLoading
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                       : Text(
-                          widget.userToEdit != null ? 'UPDATE USER' : 'REGISTER USER',
+                          widget.userToEdit != null ? 'PERBARUI PENGGUNA' : 'DAFTARKAN PENGGUNA',
                           style: GoogleFonts.outfit(
                             fontSize: 14,
                             fontWeight: FontWeight.w900,

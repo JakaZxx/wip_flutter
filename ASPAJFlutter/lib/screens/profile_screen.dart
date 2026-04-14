@@ -365,8 +365,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         sourcePath: pickedFile.path,
         aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
         uiSettings: [
-          AndroidUiSettings(toolbarTitle: 'Identity Calibration', toolbarColor: AppTheme.primaryBlue, toolbarWidgetColor: Colors.white, initAspectRatio: CropAspectRatioPreset.square, lockAspectRatio: true),
-          IOSUiSettings(title: 'Identity Calibration'),
+          AndroidUiSettings(toolbarTitle: 'Kalibrasi Identitas', toolbarColor: AppTheme.primaryBlue, toolbarWidgetColor: Colors.white, initAspectRatio: CropAspectRatioPreset.square, lockAspectRatio: true),
+          IOSUiSettings(title: 'Kalibrasi Identitas'),
           webSettings,
         ],
       );
@@ -377,7 +377,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Identity calibration failed: $e'),
+          content: Text('Kalibrasi identitas gagal: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -392,7 +392,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final updatedUser = await ApiService().updateProfile(imageBytes: imageBytes, imageFileName: 'identity.jpg');
       if (mounted) {
         context.read<AuthProvider>().updateUser(updatedUser);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Identity synchronized successfully.'), backgroundColor: Color(0xFF10B981), behavior: SnackBarBehavior.floating));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Identitas berhasil disinkronkan.'), backgroundColor: Color(0xFF10B981), behavior: SnackBarBehavior.floating));
         setState(() => _profileImage = null);
       }
     } catch (e) {

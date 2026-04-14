@@ -28,7 +28,9 @@ class PeminjamanController extends Controller
             } elseif ($user->isOfficer()) {
                 $query = Borrowing::with('student.user', 'student.schoolClass', 'items.commodity')
                     ->whereHas('items.commodity', function($q) use ($user) {
-                        $q->where('jurusan', $user->jurusan);
+                        $q->where('jurusan', $user->jurusan)
+                          ->orWhereNull('jurusan')
+                          ->orWhere('jurusan', 'Semua');
                     });
                 $borrowings = $query->orderBy('created_at', 'desc')->get();
             } else {
@@ -70,7 +72,9 @@ class PeminjamanController extends Controller
                 $borrowings = Borrowing::with('student.user', 'student.schoolClass', 'items.commodity')
                     ->where('status', 'pending')
                     ->whereHas('items.commodity', function($q) use ($user) {
-                        $q->where('jurusan', $user->jurusan);
+                        $q->where('jurusan', $user->jurusan)
+                          ->orWhereNull('jurusan')
+                          ->orWhere('jurusan', 'Semua');
                     })
                     ->orderBy('created_at', 'desc')
                     ->get();
@@ -331,7 +335,9 @@ class PeminjamanController extends Controller
 
             if ($user->isOfficer()) {
                 $borrowing->whereHas('items.commodity', function($q) use ($user) {
-                    $q->where('jurusan', $user->jurusan);
+                    $q->where('jurusan', $user->jurusan)
+                      ->orWhereNull('jurusan')
+                      ->orWhere('jurusan', 'Semua');
                 });
             } elseif (!$user->isAdmin()) {
                 $borrowing->where('student_id', $user->student->id);
@@ -532,8 +538,11 @@ class PeminjamanController extends Controller
 
             // Approve selected items
             foreach ($validItems as $item) {
-                if ($user->isOfficer() && $user->jurusan && strtolower($item->commodity->jurusan) !== strtolower($user->jurusan)) {
-                    continue; // Skip items not belonging to the officer's jurusan
+                if ($user->isOfficer() && $user->jurusan) {
+                    $commJurusan = $item->commodity->jurusan;
+                    if ($commJurusan && strtolower($commJurusan) !== strtolower($user->jurusan) && strtolower($commJurusan) !== 'semua') {
+                        continue; // Skip items belonging to DIFFERENT specific jurusan
+                    }
                 }
                 $item->status = 'approved';
                 $item->save();
@@ -594,8 +603,11 @@ class PeminjamanController extends Controller
 
             // Reject selected items and return quantities to inventory
             foreach ($validItems as $item) {
-                if ($user->isOfficer() && $user->jurusan && strtolower($item->commodity->jurusan) !== strtolower($user->jurusan)) {
-                    continue; // Skip items not belonging to the officer's jurusan
+                if ($user->isOfficer() && $user->jurusan) {
+                    $commJurusan = $item->commodity->jurusan;
+                    if ($commJurusan && strtolower($commJurusan) !== strtolower($user->jurusan) && strtolower($commJurusan) !== 'semua') {
+                        continue; // Skip items belonging to DIFFERENT specific jurusan
+                    }
                 }
                 $item->status = 'rejected';
                 $item->save();

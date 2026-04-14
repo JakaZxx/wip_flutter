@@ -58,7 +58,7 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Borrowing Request'),
+        title: const Text('Buat Permintaan Pinjam'),
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
         actions: [
           Consumer<BorrowingProvider>(
@@ -116,7 +116,7 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
                 children: [
                   // Cart Items Section
                   const Text(
-                    'Items to Borrow',
+                    'Barang yang Dipinjam',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -132,7 +132,7 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
 
                   // Borrowing Details Section
                   const Text(
-                    'Borrowing Details',
+                    'Detail Peminjaman',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -144,14 +144,14 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
                   TextFormField(
                     controller: _purposeController,
                     decoration: const InputDecoration(
-                      labelText: 'Purpose',
-                      hintText: 'Enter the purpose of borrowing',
+                      labelText: 'Tujuan',
+                      hintText: 'Masukkan tujuan peminjaman',
                       border: OutlineInputBorder(),
                     ),
                     maxLines: 3,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter the purpose';
+                        return 'Tujuan wajib diisi';
                       }
                       return null;
                     },
@@ -166,7 +166,7 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
                         child: TextFormField(
                           controller: _borrowDateController,
                           decoration: const InputDecoration(
-                            labelText: 'Borrow Date',
+                            labelText: 'Tanggal Pinjam',
                             border: OutlineInputBorder(),
                             suffixIcon: Icon(Icons.calendar_today),
                           ),
@@ -174,7 +174,7 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
                           onTap: () => _selectDate(context, true),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please select borrow date';
+                              return 'Pilih tanggal pinjam';
                             }
                             return null;
                           },
@@ -185,7 +185,7 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
                         child: TextFormField(
                           controller: _borrowTimeController,
                           decoration: const InputDecoration(
-                            labelText: 'Time',
+                            labelText: 'Jam',
                             border: OutlineInputBorder(),
                             suffixIcon: Icon(Icons.access_time),
                           ),
@@ -193,7 +193,7 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
                           onTap: () => _selectTime(context, true),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Select time';
+                              return 'Pilih jam';
                             }
                             return null;
                           },
@@ -211,7 +211,7 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
                         child: TextFormField(
                           controller: _returnDateController,
                           decoration: const InputDecoration(
-                            labelText: 'Expected Return Date',
+                            labelText: 'Tanggal Pengembalian',
                             border: OutlineInputBorder(),
                             suffixIcon: Icon(Icons.calendar_today),
                           ),
@@ -219,11 +219,11 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
                           onTap: () => _selectDate(context, false),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please select return date';
+                              return 'Pilih tanggal kembali';
                             }
                             if (_returnDate != null && _borrowDate != null &&
                                 _returnDate!.isBefore(_borrowDate!)) {
-                              return 'Return date must be after borrow date';
+                              return 'Tanggal kembali harus setelah tanggal pinjam';
                             }
                             return null;
                           },
@@ -234,7 +234,7 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
                         child: TextFormField(
                           controller: _returnTimeController,
                           decoration: const InputDecoration(
-                            labelText: 'Time',
+                            labelText: 'Jam',
                             border: OutlineInputBorder(),
                             suffixIcon: Icon(Icons.access_time),
                           ),
@@ -242,7 +242,7 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
                           onTap: () => _selectTime(context, false),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Select time';
+                              return 'Pilih jam';
                             }
                             return null;
                           },
@@ -264,7 +264,7 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
                       ),
                       child: borrowingProvider.isLoading
                           ? const CircularProgressIndicator()
-                          : const Text('Submit Borrowing Request'),
+                          : const Text('Kirim Pengajuan Pinjam'),
                     ),
                   ),
                 ],
@@ -288,7 +288,7 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
           ),
           const SizedBox(height: 16),
           const Text(
-            'Your cart is empty',
+            'Keranjang Anda Kosong',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -297,14 +297,14 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Add items from the Assets screen',
+            'Tambahkan barang di layar Aset',
             style: TextStyle(color: Colors.grey),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () => Navigator.of(context).pushNamed('/assets'),
             icon: const Icon(Icons.inventory),
-            label: const Text('Browse Assets'),
+            label: const Text('Jelajahi Aset'),
           ),
         ],
       ),
@@ -338,7 +338,7 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
       builder: (context) => Consumer<BorrowingProvider>(
         builder: (context, borrowingProvider, child) {
           return AlertDialog(
-            title: const Text('Cart Items'),
+            title: const Text('Isi Keranjang'),
             content: SizedBox(
               width: double.maxFinite,
               child: ListView.builder(
@@ -348,7 +348,7 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
                   final item = borrowingProvider.cartItems[index];
                   return ListTile(
                     title: Text(item.displayName),
-                    subtitle: Text('Quantity: ${item.quantity}'),
+                    subtitle: Text('Jumlah: ${item.quantity}'),
                     trailing: IconButton(
                       icon: const Icon(Icons.delete),
                       onPressed: () {
@@ -365,13 +365,13 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Close'),
+                child: const Text('Tutup'),
               ),
               ElevatedButton(
                 onPressed: borrowingProvider.cartItems.isNotEmpty
                     ? () => Navigator.of(context).pop()
                     : null,
-                child: const Text('Continue'),
+                child: const Text('Lanjutkan'),
               ),
             ],
           );
@@ -434,7 +434,7 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Borrowing request submitted successfully'),
+          content: Text('Permintaan peminjaman berhasil dikirim'),
           backgroundColor: Colors.green,
         ),
       );
@@ -443,7 +443,7 @@ class _CreateBorrowingFormScreenState extends State<CreateBorrowingFormScreen> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to submit borrowing request: $e'),
+          content: Text('Gagal mengirim permintaan: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -490,9 +490,9 @@ class CartItemCard extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
-                  Text('Condition: ${item.condition ?? 'Not specified'}'),
+                  Text('Kondisi: ${item.condition ?? 'Tidak ditentukan'}'),
                   if (item.description != null && item.description!.isNotEmpty)
-                    Text('Description: ${item.description}'),
+                    Text('Deskripsi: ${item.description}'),
                 ],
               ),
             ),

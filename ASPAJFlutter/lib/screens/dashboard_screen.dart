@@ -188,14 +188,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _StatData('TOTAL PEMINJAMAN', stats.totalBorrowings?.toString() ?? '0', FontAwesomeIcons.arrowsRotate, const Color(0xFF10B981)),
         ]),
         const SizedBox(height: 32),
+        if (stats.recentUsers != null && stats.recentUsers!.isNotEmpty) ...[
+          _buildActivitySection('USER BARU', 'Menunggu Persetujuan atau Terbaru'),
+          const SizedBox(height: 16),
+          ListView.builder(
+            shrinkWrap: true,
+            padding: EdgeInsets.zero,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: stats.recentUsers!.length,
+            itemBuilder: (context, i) => _buildRecentUserItem(stats.recentUsers![i]),
+          ),
+          const SizedBox(height: 32),
+        ],
         _buildSectionHeader('PANEL KONTROL', 'Tindakan Admin'),
         const SizedBox(height: 16),
         _buildActionGrid([
           _ActionData('Kelola Pengguna', FontAwesomeIcons.idCard, () => Navigator.pushNamed(context, '/admin-users')),
           _ActionData('Daftar Aset', FontAwesomeIcons.database, () => context.read<NavigationProvider>().setSelectedIndex(1)),
           _ActionData('Kelola Kelas', FontAwesomeIcons.graduationCap, () => Navigator.pushNamed(context, '/admin-classes')),
-          _ActionData('Log Aktivitas', FontAwesomeIcons.chartLine, () {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fitur Log Aktivitas segera hadir')));
+          _ActionData('Aktivitas Sistem', FontAwesomeIcons.chartLine, () {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Log aktivtas sedang disinkronkan...')));
           }),
         ]),
       ],
@@ -209,12 +221,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _buildSectionHeader('STATUS OPERASIONAL', 'Permintaan Aktif'),
         const SizedBox(height: 20),
         _buildStatsGrid([
-          _StatData('MENUNGGU PERSETUJUAN', stats.pendingBorrowingsCount?.toString() ?? '0', FontAwesomeIcons.clock, const Color(0xFFF59E0B)),
+          _StatData('MENUNGGU PERSETUJUAN', stats.pendingRequestsCount?.toString() ?? '0', FontAwesomeIcons.clock, const Color(0xFFF59E0B)),
           _StatData('SEDANG DIPINJAM', stats.activeBorrowingsCount?.toString() ?? '0', FontAwesomeIcons.handHolding, const Color(0xFF3B82F6)),
           _StatData('PENGAJUAN DITOLAK', stats.rejectedBorrowingsCount?.toString() ?? '0', FontAwesomeIcons.circleXmark, const Color(0xFFEF4444)),
           _StatData('BARANG KEMBALI', stats.returnedBorrowingsCount?.toString() ?? '0', FontAwesomeIcons.circleCheck, const Color(0xFF10B981)),
         ]),
         const SizedBox(height: 32),
+        if (stats.recentBorrowings != null && stats.recentBorrowings!.isNotEmpty) ...[
+          _buildActivitySection('PENGAJUAN TERBARU', 'Aktivitas Transaksi'),
+          const SizedBox(height: 16),
+          ListView.builder(
+            shrinkWrap: true,
+            padding: EdgeInsets.zero,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: stats.recentBorrowings!.length,
+            itemBuilder: (context, i) => _buildRecentBorrowingItem(stats.recentBorrowings![i]),
+          ),
+          const SizedBox(height: 32),
+        ],
         _buildSectionHeader('AKSI CEPAT', 'Panel Petugas'),
         const SizedBox(height: 16),
         _buildActionGrid([
@@ -222,10 +246,104 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _ActionData('Audit Inventaris', FontAwesomeIcons.listCheck, () => context.read<NavigationProvider>().setSelectedIndex(1)),
           _ActionData('Daftar Kembali', FontAwesomeIcons.boxOpen, () => context.read<NavigationProvider>().setSelectedIndex(2)),
           _ActionData('Laporan Masalah', FontAwesomeIcons.triangleExclamation, () {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fitur Laporan Masalah segera hadir')));
+            Navigator.pushNamed(context, '/help');
           }),
         ]),
       ],
+    );
+  }
+
+  Widget _buildActivitySection(String title, String subtitle) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _buildSectionHeader(title, subtitle),
+        TextButton(
+          onPressed: () {}, 
+          child: Text('LIHAT SEMUA', style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.primaryBlue))
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRecentUserItem(RecentUser user) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(12)),
+            child: const Icon(Icons.person_outline_rounded, size: 20, color: Color(0xFF64748B)),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(user.name, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(user.email, style: GoogleFonts.poppins(fontSize: 10, color: const Color(0xFF94A3B8))),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(8)),
+            child: Text(user.role.toUpperCase(), style: GoogleFonts.outfit(fontSize: 9, fontWeight: FontWeight.w900, color: const Color(0xFF64748B))),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecentBorrowingItem(RecentRequest request) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: AppTheme.primaryBlue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+            child: const Icon(Icons.inventory_2_outlined, size: 20, color: AppTheme.primaryBlue),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(request.studentName, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(request.items.join(', '), style: GoogleFonts.poppins(fontSize: 10, color: const Color(0xFF94A3B8), height: 1.2), maxLines: 1, overflow: TextOverflow.ellipsis),
+              ],
+            ),
+          ),
+          _buildSmallStatusBadge(request.status),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSmallStatusBadge(String? status) {
+    Color color = Colors.orange;
+    if (status == 'approved') color = const Color(0xFF10B981);
+    if (status == 'rejected') color = Colors.red;
+    if (status == 'returned') color = AppTheme.primaryBlue;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+      child: Text(status?.toUpperCase() ?? 'PENDING', style: GoogleFonts.outfit(fontSize: 9, fontWeight: FontWeight.w900, color: color)),
     );
   }
 
@@ -236,7 +354,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _buildSectionHeader('DASHBOARD SISWA', 'Aktivitas Saya'),
         const SizedBox(height: 20),
         _buildStatsGrid([
-          _StatData('PINJAMAN AKTIF', stats.activeBorrowingsCount?.toString() ?? '0', FontAwesomeIcons.handHolding, const Color(0xFF3B82F6)),
+          _StatData('PINJAMAN AKTIF', stats.myActiveBorrowingsCount?.toString() ?? '0', FontAwesomeIcons.handHolding, const Color(0xFF3B82F6)),
           _StatData('MENUNGGU DISETUJUI', stats.pendingBorrowingsCount?.toString() ?? '0', FontAwesomeIcons.clock, const Color(0xFFF59E0B)),
           _StatData('TOTAL KEMBALI', stats.returnedBorrowingsCount?.toString() ?? '0', FontAwesomeIcons.circleCheck, const Color(0xFF10B981)),
           _StatData('TOTAL DITOLAK', stats.rejectedBorrowingsCount?.toString() ?? '0', FontAwesomeIcons.circleXmark, const Color(0xFFEF4444)),
@@ -246,9 +364,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(height: 16),
         _buildActionGrid([
           _ActionData('Pinjam Barang', FontAwesomeIcons.cartPlus, () => context.read<NavigationProvider>().setSelectedIndex(1)),
-          _ActionData('Riwayat Pinjam', FontAwesomeIcons.history, () => context.read<NavigationProvider>().setSelectedIndex(2)),
-          _ActionData('Bantuan', FontAwesomeIcons.circleQuestion, () => Navigator.pushNamed(context, '/help')),
-          _ActionData('Ganti Password', FontAwesomeIcons.shieldHalved, () => Navigator.pushNamed(context, '/profile')),
+          _ActionData('Riwayat Pinjam', FontAwesomeIcons.clockRotateLeft, () => context.read<NavigationProvider>().setSelectedIndex(2)),
+          _ActionData('Pusat Bantuan', FontAwesomeIcons.circleQuestion, () => Navigator.pushNamed(context, '/help')),
+          _ActionData('Profil Saya', FontAwesomeIcons.shieldHalved, () => Navigator.pushNamed(context, '/profile')),
         ]),
       ],
     );
@@ -340,44 +458,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildPremiumActionCard(String title, String subtitle, dynamic icon, Color color, VoidCallback onTap) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.1), blurRadius: 25, offset: const Offset(0, 12))],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(32),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title, style: GoogleFonts.outfit(color: const Color(0xFF1E293B), fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 1)),
-                      const SizedBox(height: 4),
-                      Text(subtitle, style: GoogleFonts.poppins(color: const Color(0xFF64748B), fontSize: 12)),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(gradient: LinearGradient(colors: [color, color.withValues(alpha: 0.8)]), shape: BoxShape.circle),
-                  child: FaIcon(icon, color: Colors.white, size: 24),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildLoadingState() {
     return Container(
@@ -394,9 +474,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 60),
           FaIcon(FontAwesomeIcons.wifi, size: 60, color: Colors.red.withValues(alpha: 0.3)),
           const SizedBox(height: 24),
-          Text('COMMUNICATION FAILURE', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+          Text('GANGGUAN KONEKSI', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
           const SizedBox(height: 8),
-          Text('Infrastructure sync interrupted. Reconnecting...', style: GoogleFonts.poppins(color: const Color(0xFF64748B), fontSize: 13)),
+          Text('Sinkronisasi infrastruktur terhenti. Menghubungkan ulang...', style: GoogleFonts.poppins(color: const Color(0xFF64748B), fontSize: 13)),
           const SizedBox(height: 32),
           ElevatedButton(
             onPressed: _loadDashboardData,
