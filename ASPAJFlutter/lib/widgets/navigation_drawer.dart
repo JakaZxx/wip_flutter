@@ -185,7 +185,7 @@ class AppNavigationDrawer extends StatelessWidget {
                     if (context.mounted) Navigator.of(context).popUntil((route) => route.isFirst);
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: AppTheme.dangerRed, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 0),
-                  child: Text('TERMINATE', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w900)),
+                  child: Text('KELUAR', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w900)),
                 ),
               ],
             ),
