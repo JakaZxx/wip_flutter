@@ -388,7 +388,7 @@ class _BorrowingDetailScreenState extends State<BorrowingDetailScreen> {
   Widget _buildItemCard(BuildContext context, BorrowingItem item, String? role) {
     final isPending = (item.status ?? '').toLowerCase() == 'pending';
     final isSelected = _selectedItemIds.contains(item.id);
-    final canProcess = (role == 'officers' || role == 'admins') && isPending;
+    final canProcess = (role == 'officers' || role == 'admin') && isPending;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),

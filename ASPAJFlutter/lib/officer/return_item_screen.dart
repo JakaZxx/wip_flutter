@@ -92,7 +92,7 @@ class _ReturnItemScreenState extends State<ReturnItemScreen> {
 
     try {
       if (widget.item.borrowingId == null || widget.item.id == null) {
-        throw Exception('Incomplete transaction metadata.');
+        throw Exception('Metadata transaksi tidak lengkap.');
       }
 
       await context.read<BorrowingProvider>().returnBorrowingItem(
@@ -219,7 +219,7 @@ class _ReturnItemScreenState extends State<ReturnItemScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(c?.name ?? 'Unknown Asset', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 17, color: const Color(0xFF1E293B))),
+                Text(c?.name ?? 'Aset Tidak Diketahui', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 17, color: const Color(0xFF1E293B))),
                 const SizedBox(height: 2),
                 Text('TRANSAKSI #${widget.item.borrowingId}', style: GoogleFonts.poppins(color: const Color(0xFF94A3B8), fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 1)),
                 const SizedBox(height: 8),

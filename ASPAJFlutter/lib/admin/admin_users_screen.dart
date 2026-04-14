@@ -294,23 +294,26 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     );
   }
 
-  void _openCreateUserModal() {
+  void _openCreateUserModal({User? userToEdit}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.85,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
-            Expanded(
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.9,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (_, scrollController) => Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+            ),
+            child: SingleChildScrollView(
+              controller: scrollController,
               child: CreateUserForm(
+                userToEdit: userToEdit,
                 onCancel: () => Navigator.pop(context),
                 onSuccess: () {
                   Navigator.pop(context);
@@ -318,7 +321,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 },
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -391,6 +394,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     if (action == 'delete') {
       final confirm = await _showConfirmDialog('Hapus Pengguna', 'Anda yakin ingin menghapus akun ${user.name}?');
       if (confirm && mounted) await provider.deleteUser(user.id);
+    } else if (action == 'edit') {
+      _openCreateUserModal(userToEdit: user);
     } else if (action == 'approve') {
       if (mounted) await provider.approveOfficer(user.id);
     } else if (action == 'reject') {

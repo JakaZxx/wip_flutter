@@ -90,6 +90,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       pinned: true,
       elevation: 0,
       backgroundColor: AppTheme.primaryBlue,
+      leading: Navigator.canPop(context)
+          ? IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+              onPressed: () => Navigator.pop(context),
+            )
+          : null,
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),

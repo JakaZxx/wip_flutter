@@ -40,15 +40,15 @@ class _ReturnScreenState extends State<ReturnScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSectionLabel('BORROWING INFORMATION'),
+                    _buildSectionLabel('INFORMASI PEMINJAMAN'),
                     const SizedBox(height: 16),
                     _buildBorrowingDetailCard(),
                     const SizedBox(height: 32),
-                    _buildSectionLabel('RETURN SPECIFICATIONS'),
+                    _buildSectionLabel('SPESIFIKASI PENGEMBALIAN'),
                     const SizedBox(height: 16),
                     _buildReturnForm(),
                     const SizedBox(height: 32),
-                    _buildSectionLabel('EVIDENCE CAPTURE'),
+                    _buildSectionLabel('BUKTI PENGEMBALIAN'),
                     const SizedBox(height: 16),
                     _buildPhotoSection(),
                     const SizedBox(height: 48),
@@ -92,7 +92,7 @@ class _ReturnScreenState extends State<ReturnScreen> {
         ),
         centerTitle: true,
         title: Text(
-          'RETURN ASSET',
+          'PENGEMBALIAN ASET',
           style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 18, color: Colors.white, letterSpacing: 2),
         ),
       ),
@@ -132,19 +132,19 @@ class _ReturnScreenState extends State<ReturnScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(color: Colors.blue[50], borderRadius: BorderRadius.circular(12)),
                 child: Text(
-                  'PENDING RETURN',
+                  'SIAP DIKEMBALIKAN',
                   style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          _buildDetailRow(Icons.calendar_today_rounded, 'Borrow Date', widget.borrowing.borrowDate.toString().split(' ')[0]),
+          _buildDetailRow(Icons.calendar_today_rounded, 'Tanggal Pinjam', widget.borrowing.borrowDate.toString().split(' ')[0]),
           const SizedBox(height: 12),
-          _buildDetailRow(Icons.person_outline_rounded, 'Borrower', widget.borrowing.userName ?? 'Unknown User'),
+          _buildDetailRow(Icons.person_outline_rounded, 'Peminjam', widget.borrowing.userName ?? 'Tidak Diketahui'),
           if (widget.borrowing.tujuan != null) ...[
             const SizedBox(height: 12),
-            _buildDetailRow(Icons.notes_rounded, 'Purpose', widget.borrowing.tujuan!),
+            _buildDetailRow(Icons.notes_rounded, 'Tujuan', widget.borrowing.tujuan!),
           ],
         ],
       ),
@@ -171,7 +171,7 @@ class _ReturnScreenState extends State<ReturnScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'RECOVERY CONDITION',
+              'KONDISI BARANG',
               style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF64748B), letterSpacing: 1),
             ),
             const SizedBox(height: 8),
@@ -200,7 +200,7 @@ class _ReturnScreenState extends State<ReturnScreen> {
         const SizedBox(height: 24),
         _buildInputField(
           controller: _notesController,
-          label: 'OFFICER NOTES',
+          label: 'CATATAN PETUGAS',
           hint: 'Tambahkan catatan jika diperlukan...',
           icon: Icons.edit_note_rounded,
           maxLines: 4,
@@ -283,16 +283,16 @@ class _ReturnScreenState extends State<ReturnScreen> {
                   child: const Icon(Icons.camera_enhance_rounded, size: 40, color: AppTheme.primaryBlue),
                 ),
                 const SizedBox(height: 16),
-                Text('Capture Asset Condition', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text('Unggah Kondisi Aset', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
                 const SizedBox(height: 4),
                 Text('Ambil foto bukti pengembalian.', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF64748B))),
                 const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _buildCaptureButton(Icons.camera_alt_rounded, 'CAMERA', () => _pickImage(ImageSource.camera)),
+                    _buildCaptureButton(Icons.camera_alt_rounded, 'KAMERA', () => _pickImage(ImageSource.camera)),
                     const SizedBox(width: 16),
-                    _buildCaptureButton(Icons.photo_library_rounded, 'GALLERY', () => _pickImage(ImageSource.gallery)),
+                    _buildCaptureButton(Icons.photo_library_rounded, 'GALERI', () => _pickImage(ImageSource.gallery)),
                   ],
                 ),
               ],
@@ -339,7 +339,7 @@ class _ReturnScreenState extends State<ReturnScreen> {
         child: _isLoading
             ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
             : Text(
-                'VALIDATE RETURN',
+                'VALIDASI PENGEMBALIAN',
                 style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 2.0),
               ),
       ),
@@ -419,7 +419,7 @@ class _ReturnScreenState extends State<ReturnScreen> {
               child: const Icon(Icons.verified_rounded, size: 64, color: Colors.white),
             ),
             const SizedBox(height: 24),
-            Text('Validated Ready!', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold)),
+            Text('Validasi Berhasil!', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text('Pengembalian aset telah berhasil divalidasi dan dicatat.', textAlign: TextAlign.center, style: GoogleFonts.poppins(color: const Color(0xFF64748B))),
             const SizedBox(height: 32),

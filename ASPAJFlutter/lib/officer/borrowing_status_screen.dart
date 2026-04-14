@@ -141,6 +141,12 @@ class _BorrowingStatusScreenState extends State<BorrowingStatusScreen> {
       pinned: true,
       elevation: 0,
       backgroundColor: AppTheme.primaryBlue,
+      leading: (role == 'officers' || role == 'admin')
+        ? Builder(builder: (context) => IconButton(
+            icon: const Icon(Icons.sort_rounded, color: Colors.white, size: 28),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ))
+        : null,
       flexibleSpace: FlexibleSpaceBar(
         centerTitle: true,
         title: Text(

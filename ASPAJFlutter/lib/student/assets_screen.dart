@@ -114,15 +114,21 @@ class _AssetsScreenState extends State<AssetsScreen> {
     );
   }
 
-  Widget _buildSliverAppBar(bool isAdmin) {
+  Widget _buildSliverAppBar(bool isAdminOrOfficer) {
     return SliverAppBar(
       expandedHeight: 140,
       pinned: true,
       elevation: 0,
+      leading: isAdminOrOfficer
+        ? Builder(builder: (context) => IconButton(
+            icon: const Icon(Icons.sort_rounded, color: Colors.white, size: 28),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ))
+        : null,
       flexibleSpace: FlexibleSpaceBar(
         centerTitle: true,
         title: Text(
-          isAdmin ? 'Inventaris Sekolah' : 'Katalog Peminjaman',
+          isAdminOrOfficer ? 'Inventaris Sekolah' : 'Katalog Peminjaman',
           style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
         ),
         background: Container(
@@ -139,7 +145,7 @@ class _AssetsScreenState extends State<AssetsScreen> {
         ),
       ),
       actions: [
-        if (!isAdmin) _buildCartBadge(),
+        if (!isAdminOrOfficer) _buildCartBadge(),
         const SizedBox(width: 12),
       ],
     );

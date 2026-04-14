@@ -5,14 +5,18 @@ import '../providers/user_provider.dart';
 import '../providers/class_provider.dart';
 import '../theme/app_theme.dart';
 
+import '../models/user.dart';
+
 class CreateUserForm extends StatefulWidget {
   final VoidCallback onCancel;
   final VoidCallback onSuccess;
+  final User? userToEdit;
 
   const CreateUserForm({
     super.key,
     required this.onCancel,
     required this.onSuccess,
+    this.userToEdit,
   });
 
   @override
@@ -44,6 +48,19 @@ class _CreateUserFormState extends State<CreateUserForm> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ClassProvider>().fetchClasses();
+      if (widget.userToEdit != null) {
+        final user = widget.userToEdit!;
+        setState(() {
+          _nameController.text = user.name;
+          _emailController.text = user.email;
+          _selectedRole = user.role;
+          if (user.role == 'officers') {
+            _selectedJurusan = _jurusanOptions.contains(user.jurusan) ? user.jurusan : null;
+          } else if (user.role == 'students' && user.student != null) {
+            _selectedClassId = user.student!.schoolClassId;
+          }
+        });
+      }
     });
   }
 
@@ -70,15 +87,20 @@ class _CreateUserFormState extends State<CreateUserForm> {
     final userData = {
       'name': _nameController.text.trim(),
       'email': _emailController.text.trim(),
-      'password': _passwordController.text,
-      'password_confirmation': _confirmPasswordController.text,
+      if (_passwordController.text.isNotEmpty) 'password': _passwordController.text,
+      if (_confirmPasswordController.text.isNotEmpty) 'password_confirmation': _confirmPasswordController.text,
       'role': _selectedRole,
       if (_selectedRole == 'officers') 'jurusan': _selectedJurusan,
       if (_selectedRole == 'students') 'school_class_id': _selectedClassId,
     };
 
     final userProvider = context.read<UserProvider>();
-    final success = await userProvider.createUser(userData);
+    bool success;
+    if (widget.userToEdit != null) {
+      success = await userProvider.updateUser(widget.userToEdit!.id, userData);
+    } else {
+      success = await userProvider.createUser(userData);
+    }
     
     if (success && mounted) {
       widget.onSuccess();
@@ -158,10 +180,14 @@ class _CreateUserFormState extends State<CreateUserForm> {
                       _buildInputField(
                         controller: _passwordController,
                         label: 'PASSWORD',
-                        hint: 'Minimum 8 characters',
+                        hint: widget.userToEdit != null ? 'Biarkan kosong jika tidak diubah' : 'Minimum 8 characters',
                         icon: Icons.lock_outline_rounded,
                         isPassword: true,
-                        validator: (v) => v == null || v.length < 8 ? 'Minimal 8 karakter' : null,
+                        validator: (v) {
+                          if (widget.userToEdit == null && (v == null || v.length < 8)) return 'Minimal 8 karakter';
+                          if (widget.userToEdit != null && v != null && v.isNotEmpty && v.length < 8) return 'Minimal 8 karakter';
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 16),
                       _buildInputField(
@@ -222,7 +248,7 @@ class _CreateUserFormState extends State<CreateUserForm> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Create a new user account with specified platform roles.',
+            widget.userToEdit != null ? 'Update existing user account information.' : 'Create a new user account with specified platform roles.',
             style: GoogleFonts.poppins(
               fontSize: 12,
               color: Colors.white70,
@@ -388,7 +414,7 @@ class _CreateUserFormState extends State<CreateUserForm> {
                   child: up.isLoading
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                       : Text(
-                          'REGISTER USER',
+                          widget.userToEdit != null ? 'UPDATE USER' : 'REGISTER USER',
                           style: GoogleFonts.outfit(
                             fontSize: 14,
                             fontWeight: FontWeight.w900,

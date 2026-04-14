@@ -136,7 +136,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
       actions: [
-        IconButton(icon: const Icon(Icons.notifications_active_rounded, color: Colors.white, size: 22), onPressed: () {}),
+        IconButton(
+          icon: const Icon(Icons.notifications_active_rounded, color: Colors.white, size: 22), 
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tidak ada notifikasi baru')));
+          }
+        ),
         const SizedBox(width: 8),
       ],
     );
@@ -189,7 +194,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _ActionData('Kelola Pengguna', FontAwesomeIcons.idCard, () => Navigator.pushNamed(context, '/admin-users')),
           _ActionData('Daftar Aset', FontAwesomeIcons.database, () => context.read<NavigationProvider>().setSelectedIndex(1)),
           _ActionData('Kelola Kelas', FontAwesomeIcons.graduationCap, () => Navigator.pushNamed(context, '/admin-classes')),
-          _ActionData('Log Aktivitas', FontAwesomeIcons.chartLine, () {}),
+          _ActionData('Log Aktivitas', FontAwesomeIcons.chartLine, () {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fitur Log Aktivitas segera hadir')));
+          }),
         ]),
       ],
     );
@@ -213,8 +220,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _buildActionGrid([
           _ActionData('Proses Pengajuan', FontAwesomeIcons.clipboardCheck, () => context.read<NavigationProvider>().setSelectedIndex(2)),
           _ActionData('Audit Inventaris', FontAwesomeIcons.listCheck, () => context.read<NavigationProvider>().setSelectedIndex(1)),
-          _ActionData('Daftar Kembali', FontAwesomeIcons.boxOpen, () => Navigator.pushNamed(context, '/officer-returns')),
-          _ActionData('Laporan Masalah', FontAwesomeIcons.triangleExclamation, () {}),
+          _ActionData('Daftar Kembali', FontAwesomeIcons.boxOpen, () => context.read<NavigationProvider>().setSelectedIndex(2)),
+          _ActionData('Laporan Masalah', FontAwesomeIcons.triangleExclamation, () {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fitur Laporan Masalah segera hadir')));
+          }),
         ]),
       ],
     );
@@ -392,7 +401,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ElevatedButton(
             onPressed: _loadDashboardData,
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)), padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16)),
-            child: Text('MASUK', style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 2, color: Colors.white)),
+            child: Text('COBA LAGI', style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 2, color: Colors.white)),
           ),
         ],
       ),

@@ -17,6 +17,7 @@ import 'screens/profile_screen.dart';
 import 'admin/admin_users_screen.dart';
 import 'admin/admin_classes_screen.dart';
 import 'student/checkout_screen.dart';
+import 'screens/help_support_screen.dart';
 import 'widgets/navigation_drawer.dart';
 import 'widgets/bottom_navigation.dart';
 import 'theme/app_theme.dart';
@@ -61,6 +62,8 @@ class MyApp extends StatelessWidget {
           '/admin-users': (context) => const AdminUsersScreen(),
           '/admin-classes': (context) => const AdminClassesScreen(),
           '/checkout': (context) => const CheckoutScreen(),
+          '/help': (context) => const HelpSupportScreen(),
+          '/officer-returns': (context) => const BorrowingStatusScreen(),
         },
         onGenerateRoute: (settings) {
           if (settings.name == '/return') {

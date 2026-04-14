@@ -28,21 +28,21 @@ class AppNavigationDrawer extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 24),
               physics: const BouncingScrollPhysics(),
               children: [
-                _buildSectorHeader('OPERATIONAL COMMAND'),
-                _buildPremiumItem(context, icon: FontAwesomeIcons.chartPie, label: 'Analytics Hub', index: 0, currentIndex: navProvider.selectedIndex, onTap: () => _updateIndex(context, 0)),
-                _buildPremiumItem(context, icon: FontAwesomeIcons.boxesStacked, label: 'Asset Repository', index: 1, currentIndex: navProvider.selectedIndex, onTap: () => _updateIndex(context, 1)),
+                _buildSectorHeader('OPERASIONAL'),
+                _buildPremiumItem(context, icon: FontAwesomeIcons.chartPie, label: 'Analitik Dashboard', index: 0, currentIndex: navProvider.selectedIndex, onTap: () => _updateIndex(context, 0)),
+                _buildPremiumItem(context, icon: FontAwesomeIcons.boxesStacked, label: 'Data Aset', index: 1, currentIndex: navProvider.selectedIndex, onTap: () => _updateIndex(context, 1)),
                 
                 if (user?.isAdmin == true || user?.isOfficer == true) ...[
-                  _buildSectorHeader('ADMINISTRATIVE'),
-                  _buildPremiumItem(context, icon: FontAwesomeIcons.clipboardCheck, label: 'Borrowing Triage', index: 2, currentIndex: navProvider.selectedIndex, onTap: () => _updateIndex(context, 2)),
+                  _buildSectorHeader('ADMINISTRASI'),
+                  _buildPremiumItem(context, icon: FontAwesomeIcons.clipboardCheck, label: 'Validasi Peminjaman', index: 2, currentIndex: navProvider.selectedIndex, onTap: () => _updateIndex(context, 2)),
                   if (user?.isAdmin == true)
-                    _buildPremiumItem(context, icon: FontAwesomeIcons.userShield, label: 'Identity Management', onTap: () => _navigate(context, '/admin-users')),
-                  _buildPremiumItem(context, icon: FontAwesomeIcons.graduationCap, label: 'Structural Data', onTap: () => _navigate(context, '/admin-classes')),
+                    _buildPremiumItem(context, icon: FontAwesomeIcons.userShield, label: 'Manajemen Pengguna', onTap: () => _navigate(context, '/admin-users')),
+                  _buildPremiumItem(context, icon: FontAwesomeIcons.graduationCap, label: 'Data Kelas', onTap: () => _navigate(context, '/admin-classes')),
                 ],
 
-                _buildSectorHeader('INFRASTRUCTURE'),
-                _buildPremiumItem(context, icon: FontAwesomeIcons.solidCircleUser, label: 'Personal Identity', onTap: () => _navigate(context, '/profile')),
-                _buildPremiumItem(context, icon: FontAwesomeIcons.powerOff, label: 'Terminate Session', onTap: () => _handleLogout(context, authProvider), color: AppTheme.dangerRed),
+                _buildSectorHeader('AKUN & PENGATURAN'),
+                _buildPremiumItem(context, icon: FontAwesomeIcons.solidCircleUser, label: 'Profil Saya', onTap: () => _navigate(context, '/profile')),
+                _buildPremiumItem(context, icon: FontAwesomeIcons.powerOff, label: 'Keluar', onTap: () => _handleLogout(context, authProvider), color: AppTheme.dangerRed),
               ],
             ),
           ),
@@ -173,11 +173,11 @@ class AppNavigationDrawer extends StatelessWidget {
             child: AlertDialog(
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-              title: Text('TERMINATE SESSION?', style: GoogleFonts.outfit(fontWeight: FontWeight.w900, letterSpacing: 1)),
-              content: Text('Confirm operational decoupling from ASPAJ infrastructure.', style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF64748B))),
+              title: Text('KELUAR?', style: GoogleFonts.outfit(fontWeight: FontWeight.w900, letterSpacing: 1)),
+              content: Text('Apakah Anda yakin ingin keluar dari akun ini?', style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF64748B))),
               actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: Text('CANCEL', style: GoogleFonts.outfit(color: const Color(0xFF94A3B8), fontWeight: FontWeight.w900))),
+                TextButton(onPressed: () => Navigator.pop(context), child: Text('BATAL', style: GoogleFonts.outfit(color: const Color(0xFF94A3B8), fontWeight: FontWeight.w900))),
                 ElevatedButton(
                   onPressed: () async {
                     Navigator.pop(context);

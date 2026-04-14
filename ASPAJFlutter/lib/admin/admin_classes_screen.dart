@@ -74,7 +74,7 @@ class _AdminClassesScreenState extends State<AdminClassesScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: isOfficer ? null : FloatingActionButton.extended(
         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminEditClassScreen())),
         backgroundColor: AppTheme.primaryBlue,
         elevation: 10,
@@ -452,7 +452,24 @@ class _AdminClassesScreenState extends State<AdminClassesScreen> {
     return classes.where((schoolClass) {
       final matchesSearch = _searchController.text.isEmpty || schoolClass.name.toLowerCase().contains(_searchController.text.toLowerCase());
       final matchesLevel = _selectedLevelFilter == null || schoolClass.level == _selectedLevelFilter;
-      final matchesProgram = _selectedProgramStudyFilter == null || schoolClass.programStudy == _selectedProgramStudyFilter;
+      
+      bool matchesProgram = true;
+      if (isOfficer) {
+        if (officerProgramStudy != null && officerProgramStudy.isNotEmpty) {
+          final pStudy = schoolClass.programStudy?.toLowerCase() ?? '';
+          final oStudy = officerProgramStudy.toLowerCase();
+          matchesProgram = pStudy.contains(oStudy) || oStudy.contains(pStudy);
+          if (!matchesProgram) {
+            final keywords = oStudy.split(' ').where((w) => w.length > 2);
+            for (final kw in keywords) {
+              if (pStudy.contains(kw)) matchesProgram = true;
+            }
+          }
+        }
+      } else {
+        matchesProgram = _selectedProgramStudyFilter == null || schoolClass.programStudy == _selectedProgramStudyFilter;
+      }
+      
       return matchesSearch && matchesLevel && matchesProgram;
     }).toList();
   }
