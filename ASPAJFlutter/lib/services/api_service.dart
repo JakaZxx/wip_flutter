@@ -14,7 +14,7 @@ import '../models/dashboard_stats.dart';
 
 class ApiService {
   // Note: Using 10.0.2.2 for Android Emulator, 127.0.0.1 for iOS, or your local machine IP
-  static const String _defaultIP = '10.106.1.67'; 
+  static const String _defaultIP = 'localhost'; 
   
   static String get baseUrl => 'http://$_defaultIP:8000/api';
   static String get baseStorageUrl => 'http://$_defaultIP:8000';
