@@ -151,163 +151,176 @@
     </div>
     <div class="sidebar-content">
       <ul class="lists">
-        @if(Auth::user()->role === 'admin')
-          <li>
-            <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-              <i class="bx bx-home-alt icon"></i> Dashboard
-            </a>
-          </li>
-          <li>
-            <a href="{{ route('borrowing.request.create') }}" class="nav-link {{ request()->routeIs('borrowing.request.create') ? 'active' : '' }}">
-              <i class="bx bx-plus-circle icon"></i> Peminjaman Aset
-            </a>
-          </li>
-          <li>
-            <a href="{{ route('admin.borrowings.index') }}" class="nav-link {{ request()->routeIs('admin.borrowings.index') ? 'active' : '' }}">
-              <i class="bx bx-book-content icon"></i> Kelola Peminjaman
-              @if(Auth::check() && Auth::user()->isAdmin() && Auth::user()->getPendingBorrowingsCountForAdmin() > 0)
-                <span class="notification-dot">{{ Auth::user()->getPendingBorrowingsCountForAdmin() }}</span>
-              @endif
-            </a>
-          </li>
-          <li>
-            <a href="javascript:void(0)" class="nav-link" id="masterDataBtn">
-              <i class="bx bx-folder icon"></i> Kelola Data
-              <i class="bx bx-chevron-down" style="margin-left:auto;"></i>
-            </a>
-            <ul class="submenu" id="masterDataMenu">
-              <li>
-                <a href="{{ route('admin.assets.index') }}" class="nav-link {{ request()->routeIs('admin.assets.*') ? 'active' : '' }}">
-                  <i class="bx bx-package icon"></i> Unit Kerja
-                </a>
-              </li>
-              <li>
-                <a href="{{ route('users.index') }}" class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
-                  <i class="bx bx-user icon"></i> Kelola User
-                </a>
-              </li>
-              <li>
-                <a href="{{ route('admin.classes.index') }}" class="nav-link {{ request()->routeIs('admin.classes.*') ? 'active' : '' }}">
-                  <i class="bx bx-chalkboard icon"></i> Kelola Kelas
-                </a>
-              </li>
-            </ul>
-          </li>
-        @elseif(Auth::user()->role === 'students')
-          <li>
-            <a href="{{ route('students.dashboard') }}" class="nav-link {{ request()->routeIs('students.dashboard') ? 'active' : '' }}">
-              <i class="bx bx-home-alt icon"></i> Dashboard
-            </a>
-          </li>
-          <li>
-            <a href="{{ route('borrowing.request.create.student') }}" class="nav-link {{ request()->routeIs('borrowing.request.create.student') ? 'active' : '' }}">
-              <i class="bx bx-plus-circle icon"></i> Peminjaman Aset
-            </a>
-          </li>
-          <li>
-            <a href="{{ route('students.borrowings.index') }}" class="nav-link">
-                <i class="bx bx-list-check icon"></i>
-                Status Peminjaman
-                @if(Auth::check() && Auth::user()->isStudent() && Auth::user()->getUpdatedBorrowingsCount() > 0)
-                  <span class="notification-dot">{{ Auth::user()->getUpdatedBorrowingsCount() }}</span>
+        @auth
+          @if(Auth::user()->role === 'admin')
+            <li>
+              <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                <i class="bx bx-home-alt icon"></i> Dashboard
+              </a>
+            </li>
+            <li>
+              <a href="{{ route('borrowing.request.create') }}" class="nav-link {{ request()->routeIs('borrowing.request.create') ? 'active' : '' }}">
+                <i class="bx bx-plus-circle icon"></i> Peminjaman Aset
+              </a>
+            </li>
+            <li>
+              <a href="{{ route('admin.borrowings.index') }}" class="nav-link {{ request()->routeIs('admin.borrowings.index') ? 'active' : '' }}">
+                <i class="bx bx-book-content icon"></i> Kelola Peminjaman
+                @if(Auth::user()->isAdmin() && Auth::user()->getPendingBorrowingsCountForAdmin() > 0)
+                  <span class="notification-dot">{{ Auth::user()->getPendingBorrowingsCountForAdmin() }}</span>
                 @endif
-            </a>
-          </li>
-        @elseif(Auth::user()->role === 'officers')
+              </a>
+            </li>
+            <li>
+              <a href="javascript:void(0)" class="nav-link" id="masterDataBtn">
+                <i class="bx bx-folder icon"></i> Kelola Data
+                <i class="bx bx-chevron-down" style="margin-left:auto;"></i>
+              </a>
+              <ul class="submenu" id="masterDataMenu">
+                <li>
+                  <a href="{{ route('admin.assets.index') }}" class="nav-link {{ request()->routeIs('admin.assets.*') ? 'active' : '' }}">
+                    <i class="bx bx-package icon"></i> Unit Kerja
+                  </a>
+                </li>
+                <li>
+                  <a href="{{ route('users.index') }}" class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
+                    <i class="bx bx-user icon"></i> Kelola User
+                  </a>
+                </li>
+                <li>
+                  <a href="{{ route('admin.classes.index') }}" class="nav-link {{ request()->routeIs('admin.classes.*') ? 'active' : '' }}">
+                    <i class="bx bx-chalkboard icon"></i> Kelola Kelas
+                  </a>
+                </li>
+              </ul>
+            </li>
+          @elseif(Auth::user()->role === 'students')
+            <li>
+              <a href="{{ route('students.dashboard') }}" class="nav-link {{ request()->routeIs('students.dashboard') ? 'active' : '' }}">
+                <i class="bx bx-home-alt icon"></i> Dashboard
+              </a>
+            </li>
+            <li>
+              <a href="{{ route('borrowing.request.create.student') }}" class="nav-link {{ request()->routeIs('borrowing.request.create.student') ? 'active' : '' }}">
+                <i class="bx bx-plus-circle icon"></i> Peminjaman Aset
+              </a>
+            </li>
+            <li>
+              <a href="{{ route('students.borrowings.index') }}" class="nav-link">
+                  <i class="bx bx-list-check icon"></i>
+                  Status Peminjaman
+                  @if(Auth::user()->isStudent() && Auth::user()->getUpdatedBorrowingsCount() > 0)
+                    <span class="notification-dot">{{ Auth::user()->getUpdatedBorrowingsCount() }}</span>
+                  @endif
+              </a>
+            </li>
+          @elseif(Auth::user()->role === 'officers')
+            <li>
+              <a href="{{ route('officers.dashboard') }}" class="nav-link {{ request()->routeIs('officers.dashboard') ? 'active' : '' }}">
+                <i class="bx bx-home-alt icon"></i> Dashboard
+              </a>
+            </li>
+            <li>
+              <a href="javascript:void(0)" class="nav-link" id="officerMasterDataBtn">
+                <i class="bx bx-folder icon"></i> Kelola Data
+                <i class="bx bx-chevron-down" style="margin-left:auto;"></i>
+              </a>
+              <ul class="submenu" id="officerMasterDataMenu">
+                <li>
+                  <a href="{{ route('officers.assets.index') }}" class="nav-link {{ request()->routeIs('officers.assets.*') ? 'active' : '' }}">
+                    <i class="bx bx-package icon"></i> Unit Kerja
+                  </a>
+                </li>
+                <li>
+                  <a href="{{ route('officers.classes.index') }}" class="nav-link {{ request()->routeIs('officers.classes.*') ? 'active' : '' }}">
+                    <i class="bx bx-chalkboard icon"></i> Kelola Kelas
+                  </a>
+                </li>
+              </ul>
+            </li>
+            <li>
+              <a href="{{ route('borrowing.request.create.officers') }}" class="nav-link {{ request()->routeIs('borrowing.request.create.officer') ? 'active' : '' }}">
+                <i class="bx bx-plus-circle icon"></i> Peminjaman Aset
+              </a>
+            </li>
+            <li>
+              <a href="{{ route('officers.borrowings.index') }}" class="nav-link {{ request()->routeIs('officers.borrowings.index') ? 'active' : '' }}">
+                <i class="bx bx-book-content icon"></i> Kelola Peminjaman
+                @if(Auth::user()->isOfficer() && Auth::user()->getPendingBorrowingsCount() > 0)
+                  <span class="notification-dot">{{ Auth::user()->getPendingBorrowingsCount() }}</span>
+                @endif
+              </a>
+            </li>
+            <li>
+              <a href="{{ route('officers.borrowings.my') }}" class="nav-link {{ request()->routeIs('officers.borrowings.my') ? 'active' : '' }}">
+                  <i class="bx bx-list-check icon"></i>
+                  Status Peminjaman Saya
+              </a>
+            </li>
+          @endif
+        @else
           <li>
-            <a href="{{ route('officers.dashboard') }}" class="nav-link {{ request()->routeIs('officers.dashboard') ? 'active' : '' }}">
-              <i class="bx bx-home-alt icon"></i> Dashboard
+            <a href="{{ route('login') }}" class="nav-link {{ request()->routeIs('login') ? 'active' : '' }}">
+              <i class="bx bx-log-in icon"></i> Login
             </a>
           </li>
           <li>
-            <a href="javascript:void(0)" class="nav-link" id="officerMasterDataBtn">
-              <i class="bx bx-folder icon"></i> Kelola Data
-              <i class="bx bx-chevron-down" style="margin-left:auto;"></i>
-            </a>
-            <ul class="submenu" id="officerMasterDataMenu">
-              <li>
-                <a href="{{ route('officers.assets.index') }}" class="nav-link {{ request()->routeIs('officers.assets.*') ? 'active' : '' }}">
-                  <i class="bx bx-package icon"></i> Unit Kerja
-                </a>
-              </li>
-              <li>
-                <a href="{{ route('officers.classes.index') }}" class="nav-link {{ request()->routeIs('officers.classes.*') ? 'active' : '' }}">
-                  <i class="bx bx-chalkboard icon"></i> Kelola Kelas
-                </a>
-              </li>
-            </ul>
-          </li>
-          <li>
-            <a href="{{ route('borrowing.request.create.officers') }}" class="nav-link {{ request()->routeIs('borrowing.request.create.officer') ? 'active' : '' }}">
-              <i class="bx bx-plus-circle icon"></i> Peminjaman Aset
+            <a href="{{ route('register') }}" class="nav-link {{ request()->routeIs('register') ? 'active' : '' }}">
+              <i class="bx bx-user-plus icon"></i> Register
             </a>
           </li>
-          <li>
-            <a href="{{ route('officers.borrowings.index') }}" class="nav-link {{ request()->routeIs('officers.borrowings.index') ? 'active' : '' }}">
-              <i class="bx bx-book-content icon"></i> Kelola Peminjaman
-              @if(Auth::check() && Auth::user()->isOfficer() && Auth::user()->getPendingBorrowingsCount() > 0)
-                <span class="notification-dot">{{ Auth::user()->getPendingBorrowingsCount() }}</span>
-              @endif
-            </a>
-          </li>
-          <li>
-            <a href="{{ route('officers.borrowings.my') }}" class="nav-link {{ request()->routeIs('officers.borrowings.my') ? 'active' : '' }}">
-                <i class="bx bx-list-check icon"></i>
-                Status Peminjaman Saya
-            </a>
-          </li>
-        @endif
+        @endauth
       </ul>
     </div>
 
 
     <div class="account-section">Account</div>
       <ul class="lists">
-        <li style="position: relative;">
-          <a href="#"
-             class="nav-link settings-toggle flex items-center px-3 py-1.5"
-             id="settingsToggle">
+        @auth
+          <li style="position: relative;">
+            <a href="#"
+               class="nav-link settings-toggle flex items-center px-3 py-1.5"
+               id="settingsToggle">
 
-             <div class="avatar-wrapper">
-              @if(Auth::user()->profile_picture && Auth::user()->profile_picture !== 'uploads/profile_pictures/default.png')
-                <img src="{{ asset('storage/'.Auth::user()->profile_picture) }}"
-                     alt="Profile"
-                     class="avatar-img">
-              @else
-                <img src="{{ asset('uploads/profile_pictures/default.png') }}"
-                     alt="Default Profile"
-                     class="avatar-img">
-              @endif
-            </div>
+               <div class="avatar-wrapper">
+                @if(Auth::user()->profile_picture && Auth::user()->profile_picture !== 'uploads/profile_pictures/default.png')
+                  <img src="{{ asset('storage/'.Auth::user()->profile_picture) }}"
+                       alt="Profile"
+                       class="avatar-img">
+                @else
+                  <img src="{{ asset('uploads/profile_pictures/default.png') }}"
+                       alt="Default Profile"
+                       class="avatar-img">
+                @endif
+              </div>
 
-            <span class="truncate">{{ Auth::user()->name }}</span>
-            <i class="bx bx-chevron-down ml-auto text-sm"></i>
-          </a>
+              <span class="truncate">{{ Auth::user()->name }}</span>
+              <i class="bx bx-chevron-down ml-auto text-sm"></i>
+            </a>
 
 
-          <ul class="settings-dropdown" id="settingsDropdown">
-            @if(Auth::user()->role === 'admin' || Auth::user()->role === 'officers' || Auth::user()->role === 'students')
-            <li>
-              <a href="{{ route('profile') }}" class="nav-link">
-                <i class="bx bx-cog icon"></i> Pengaturan Akun
-              </a>
-            </li>
-            <li>
-              <a href="{{ route('bugreport.form') }}" class="nav-link">
-                <i class="bx bx-error-circle"></i> Laporkan Bug
-              </a>
-            </li>
-            <li>
-              <form id="logoutForm" action="{{ route('logout') }}" method="POST" style="margin:0;padding:0;">
-                @csrf
-                <button type="submit" class="logout-btn">
-                  <i class="bx bx-log-out icon"></i> Logout
-                </button>
-              </form>
-            </li>
-            @endif
-          </ul>
-        </li>
+            <ul class="settings-dropdown" id="settingsDropdown">
+              <li>
+                <a href="{{ route('profile') }}" class="nav-link">
+                  <i class="bx bx-cog icon"></i> Pengaturan Akun
+                </a>
+              </li>
+              <li>
+                <a href="{{ route('bugreport.form') }}" class="nav-link">
+                  <i class="bx bx-error-circle"></i> Laporkan Bug
+                </a>
+              </li>
+              <li>
+                <form id="logoutForm" action="{{ route('logout') }}" method="POST" style="margin:0;padding:0;">
+                  @csrf
+                  <button type="submit" class="logout-btn">
+                    <i class="bx bx-log-out icon"></i> Logout
+                  </button>
+                </form>
+              </li>
+            </ul>
+          </li>
+        @endauth
       </ul>
     </div>
   </div>

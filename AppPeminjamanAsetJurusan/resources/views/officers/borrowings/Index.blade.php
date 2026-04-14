@@ -463,12 +463,22 @@
 
     function openApproveModal(borrowingId) {
         var itemsHtml = '';
-        @php $officerJurusan = auth()->user()->jurusan ?? null; @endphp
+        @php 
+            $user = auth()->user();
+            $officerJurusan = $user->jurusan ? trim(strtolower($user->jurusan)) : null;
+            $isAdmin = $user->isAdmin();
+        @endphp
         @foreach($borrowings as $borrowing)
             if ({{ $borrowing->id }} === borrowingId) {
                 @foreach($borrowing->items as $item)
-                    @if($item->status == 'pending' && (!$officerJurusan || strtolower($item->commodity->jurusan) == strtolower($officerJurusan)))
-                        itemsHtml += '<label><input type="checkbox" name="items[]" value="{{ $item->id }}"> {{ $item->commodity->name }} ({{ $item->quantity }} unit)</label><br>';
+                    @php 
+                        $itemJurusan = $item->commodity->jurusan ? trim(strtolower($item->commodity->jurusan)) : null;
+                        $canSee = $isAdmin || !$officerJurusan || !$itemJurusan || $itemJurusan == $officerJurusan;
+                    @endphp
+                    @if($item->status == 'pending')
+                        if ({{ $canSee ? 'true' : 'false' }}) {
+                            itemsHtml += '<label><input type="checkbox" name="items[]" value="{{ $item->id }}"> {{ $item->commodity->name }} ({{ $item->quantity }} unit)</label><br>';
+                        }
                     @endif
                 @endforeach
             }
@@ -484,12 +494,22 @@
 
     function openRejectModal(borrowingId) {
         var itemsHtml = '';
-        @php $officerJurusan = auth()->user()->jurusan ?? null; @endphp
+        @php 
+            $user = auth()->user();
+            $officerJurusan = $user->jurusan ? trim(strtolower($user->jurusan)) : null;
+            $isAdmin = $user->isAdmin();
+        @endphp
         @foreach($borrowings as $borrowing)
             if ({{ $borrowing->id }} === borrowingId) {
                 @foreach($borrowing->items as $item)
-                    @if($item->status == 'pending' && (!$officerJurusan || strtolower($item->commodity->jurusan) == strtolower($officerJurusan)))
-                        itemsHtml += '<label><input type="checkbox" name="items[]" value="{{ $item->id }}"> {{ $item->commodity->name }} ({{ $item->quantity }} unit)</label><br>';
+                    @php 
+                        $itemJurusan = $item->commodity->jurusan ? trim(strtolower($item->commodity->jurusan)) : null;
+                        $canSee = $isAdmin || !$officerJurusan || !$itemJurusan || $itemJurusan == $officerJurusan;
+                    @endphp
+                    @if($item->status == 'pending')
+                        if ({{ $canSee ? 'true' : 'false' }}) {
+                            itemsHtml += '<label><input type="checkbox" name="items[]" value="{{ $item->id }}"> {{ $item->commodity->name }} ({{ $item->quantity }} unit)</label><br>';
+                        }
                     @endif
                 @endforeach
             }
@@ -505,13 +525,22 @@
 
     function openReturnModal(borrowingId) {
         var itemsHtml = '';
-        @php $officerJurusan = trim(strtolower(auth()->user()->jurusan ?? '')); @endphp
+        @php 
+            $user = auth()->user();
+            $officerJurusan = $user->jurusan ? trim(strtolower($user->jurusan)) : null;
+            $isAdmin = $user->isAdmin();
+        @endphp
         @foreach($borrowings as $borrowing)
             if ({{ $borrowing->id }} === borrowingId) {
                 @foreach($borrowing->items as $item)
-                    @php $itemJurusan = trim(strtolower($item->commodity->jurusan ?? '')); @endphp
-                    @if($item->status == 'approved' && $itemJurusan == $officerJurusan)
-                        itemsHtml += `<label><input type="checkbox" name="items[]" value="{{ $item->id }}"> {{ $item->commodity->name }} ({{ $item->quantity }} unit)</label><br>`;
+                    @php 
+                        $itemJurusan = $item->commodity->jurusan ? trim(strtolower($item->commodity->jurusan)) : null;
+                        $canSee = $isAdmin || !$officerJurusan || !$itemJurusan || $itemJurusan == $officerJurusan;
+                    @endphp
+                    @if($item->status == 'approved')
+                        if ({{ $canSee ? 'true' : 'false' }}) {
+                            itemsHtml += '<label><input type="checkbox" name="items[]" value="{{ $item->id }}"> {{ $item->commodity->name }} ({{ $item->quantity }} unit)</label><br>';
+                        }
                     @endif
                 @endforeach
             }

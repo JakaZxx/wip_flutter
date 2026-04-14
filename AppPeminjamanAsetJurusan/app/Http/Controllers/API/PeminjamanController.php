@@ -196,6 +196,7 @@ class PeminjamanController extends Controller
                 'student_id' => $user->student ? $user->student->id : null,
             ]);
 
+            /*
             // Check if student has any active borrowings
             $activeBorrowings = Borrowing::where('student_id', $user->student->id)
                 ->whereIn('status', ['pending', 'approved'])
@@ -212,6 +213,7 @@ class PeminjamanController extends Controller
                     'message' => 'You have active borrowings. Please return them first.'
                 ], 400);
             }
+            */
 
             // Check item availability
             foreach ($request->items as $item) {
@@ -760,20 +762,26 @@ class PeminjamanController extends Controller
     {
         $borrowing->load('items');
         $items = $borrowing->items;
-        $pendingCount = $items->where('status', 'pending')->count();
-        $approvedCount = $items->where('status', 'approved')->count();
-        $rejectedCount = $items->where('status', 'rejected')->count();
-        $totalItems = $items->count();
+        $total = $items->count();
+        $pending = $items->where('status', 'pending')->count();
+        $approved = $items->where('status', 'approved')->count();
+        $returned = $items->where('status', 'returned')->count();
+        $rejected = $items->where('status', 'rejected')->count();
 
-        if ($pendingCount > 0) {
-            $borrowing->status = 'pending';
-        } elseif ($approvedCount === $totalItems) {
+        if ($total === 0) return;
+
+        if ($returned + $rejected === $total && $returned > 0) {
+            $borrowing->status = 'returned';
+        } elseif ($returned > 0) {
+            $borrowing->status = 'partially_returned';
+        } elseif ($approved + $returned + $rejected === $total && $approved > 0) {
             $borrowing->status = 'approved';
-        } elseif ($rejectedCount === $totalItems) {
-            $borrowing->status = 'rejected';
+        } elseif ($approved > 0) {
+            $borrowing->status = 'partially_approved';
+        } elseif ($pending > 0) {
+            $borrowing->status = 'pending';
         } else {
-            // Mixed approved and rejected, but no pending
-            $borrowing->status = $approvedCount > 0 ? 'partially_approved' : 'rejected';
+            $borrowing->status = 'rejected';
         }
 
         $borrowing->save();
@@ -946,22 +954,7 @@ class PeminjamanController extends Controller
 
     private function updateBorrowingStatusAfterReturn(Borrowing $borrowing)
     {
-        $borrowing->load('items');
-        $items = $borrowing->items;
-        $returnedCount = $items->where('status', 'returned')->count();
-        $rejectedCount = $items->where('status', 'rejected')->count();
-        $totalReturnable = $items->count() - $rejectedCount;
-
-        if ($returnedCount === $totalReturnable && $totalReturnable > 0) {
-            $borrowing->status = 'returned';
-        } elseif ($returnedCount > 0) {
-            $borrowing->status = 'partially_returned';
-        } else {
-            // If no items were returned, but return was attempted, perhaps keep as is or set to something, but shouldn't happen
-            $borrowing->status = $borrowing->status; // keep previous status
-        }
-
-        $borrowing->save();
+        $this->updateBorrowingStatus($borrowing);
     }
 
     public function getCart(Request $request)

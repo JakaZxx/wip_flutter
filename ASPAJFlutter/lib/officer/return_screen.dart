@@ -9,8 +9,9 @@ import '../theme/app_theme.dart';
 
 class ReturnScreen extends StatefulWidget {
   final Borrowing borrowing;
+  final List<int>? initialSelectedItemIds;
 
-  const ReturnScreen({super.key, required this.borrowing});
+  const ReturnScreen({super.key, required this.borrowing, this.initialSelectedItemIds});
 
   @override
   State<ReturnScreen> createState() => _ReturnScreenState();
@@ -20,9 +21,24 @@ class _ReturnScreenState extends State<ReturnScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _conditionController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
+  late Set<int> _selectedItemIds;
 
   File? _returnPhoto;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedItemIds = Set.from(widget.initialSelectedItemIds ?? []);
+    // If none selected, default to all approved items
+    if (_selectedItemIds.isEmpty) {
+      _selectedItemIds = Set.from(
+        widget.borrowing.items
+            .where((i) => i.status == 'approved')
+            .map((i) => i.id!)
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +63,10 @@ class _ReturnScreenState extends State<ReturnScreen> {
                     _buildSectionLabel('SPESIFIKASI PENGEMBALIAN'),
                     const SizedBox(height: 16),
                     _buildReturnForm(),
+                    const SizedBox(height: 32),
+                    _buildSectionLabel('PILIH BARANG YANG DIKEMBALIKAN'),
+                    const SizedBox(height: 16),
+                    _buildItemsChecklist(),
                     const SizedBox(height: 32),
                     _buildSectionLabel('BUKTI PENGEMBALIAN'),
                     const SizedBox(height: 16),
@@ -161,6 +181,62 @@ class _ReturnScreenState extends State<ReturnScreen> {
           child: Text(value, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF1E293B))),
         ),
       ],
+    );
+  }
+
+  Widget _buildItemsChecklist() {
+    final approvableItems = widget.borrowing.items.where((i) => i.status == 'approved').toList();
+
+    if (approvableItems.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(color: Colors.amber[50], borderRadius: BorderRadius.circular(16)),
+        child: Text('Tidak ada barang yang siap dikembalikan.', style: GoogleFonts.poppins(fontSize: 12, color: Colors.amber[900])),
+      );
+    }
+
+    return Column(
+      children: approvableItems.map((item) {
+        final isSelected = _selectedItemIds.contains(item.id);
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              if (isSelected) {
+                _selectedItemIds.remove(item.id!);
+              } else {
+                _selectedItemIds.add(item.id!);
+              }
+            });
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isSelected ? AppTheme.primaryBlue.withValues(alpha: 0.05) : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: isSelected ? AppTheme.primaryBlue : const Color(0xFFF1F5F9), width: isSelected ? 2 : 1),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isSelected ? Icons.check_circle_rounded : Icons.radio_button_off_rounded,
+                  color: isSelected ? AppTheme.primaryBlue : const Color(0xFFCBD5E1),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(item.commodityName ?? 'Aset', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 14)),
+                      Text('${item.quantity} unit', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF64748B))),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -376,10 +452,17 @@ class _ReturnScreenState extends State<ReturnScreen> {
     try {
       final borrowingProvider = context.read<BorrowingProvider>();
 
+      if (_selectedItemIds.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pilih minimal satu barang untuk dikembalikan')));
+        setState(() => _isLoading = false);
+        return;
+      }
+
       final returnData = {
         'return_condition': _conditionController.text,
         'return_notes': _notesController.text,
         'return_photo': _returnPhoto,
+        'items': _selectedItemIds.toList(),
         'return_date': DateTime.now().toIso8601String(),
       };
 

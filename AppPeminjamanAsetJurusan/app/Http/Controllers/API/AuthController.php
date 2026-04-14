@@ -18,7 +18,7 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        Log::info('AuthController::login started');
+        Log::info('AuthController::login started', ['request' => $request->all()]);
         try {
             // Validate input
             $validator = Validator::make($request->all(), [
@@ -44,9 +44,10 @@ class AuthController extends Controller
                 ->first();
 
             if ($user && \Illuminate\Support\Facades\Hash::check($credentials['password'], $user->password)) {
+                Log::info('AuthController::login: Password check passed', ['user_id' => $user->id]);
                 $user->load('student.schoolClass');
                 $token = $user->createToken('API Token')->plainTextToken;
-                Log::info('AuthController::login ended successfully');
+                Log::info('AuthController::login ended successfully', ['user_role' => $user->role]);
                 return response()->json([
                     'success' => true,
                     'message' => 'Login successful',
@@ -54,7 +55,7 @@ class AuthController extends Controller
                     'token' => $token
                 ]);
             } else {
-                Log::warning('AuthController::login failed: Invalid credentials', ['email' => $request->email]);
+                Log::warning('AuthController::login failed: Invalid credentials or password mismatch', ['email' => $request->email, 'user_found' => ($user != null)]);
                 Log::info('AuthController::login ended');
                 return response()->json([
                     'success' => false,

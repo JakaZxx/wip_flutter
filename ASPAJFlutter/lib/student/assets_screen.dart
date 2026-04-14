@@ -155,35 +155,49 @@ class _AssetsScreenState extends State<AssetsScreen> {
     return Consumer<BorrowingProvider>(
       builder: (context, provider, child) {
         final count = provider.cartItems.length;
-        return Padding(
-          padding: const EdgeInsets.only(right: 8.0, top: 4),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 22),
-                ),
-                onPressed: () => Navigator.of(context).pushNamed('/checkout'),
-              ),
-              if (count > 0)
-                Positioned(
-                  right: 4,
-                  top: 4,
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.only(right: 4.0),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                InkWell(
+                  onTap: () => Navigator.of(context).pushNamed('/checkout'),
+                  borderRadius: BorderRadius.circular(12),
                   child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(color: Color(0xFFEF4444), shape: BoxShape.circle),
-                    constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                    child: Text(
-                      '$count',
-                      style: GoogleFonts.outfit(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 22),
                     ),
                   ),
                 ),
-            ],
+                if (count > 0)
+                  Positioned(
+                    right: -5,
+                    top: -5,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEF4444),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppTheme.primaryBlue, width: 1.5),
+                      ),
+                      constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+                      child: Center(
+                        child: Text(
+                          '$count',
+                          style: GoogleFonts.outfit(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         );
       },
@@ -600,15 +614,18 @@ class BorrowingAssetCardPremium extends StatelessWidget {
       } : null,
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.all(6),
+        width: 32, // Added fixed size for better alignment
+        height: 32,
         decoration: BoxDecoration(
           color: isInCart ? const Color(0xFF10B981) : (commodity.stock > 0 ? AppTheme.primaryBlue : Colors.grey[200]),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(
-          isInCart ? Icons.check_rounded : Icons.add_rounded,
-          color: Colors.white,
-          size: 18,
+        child: Center(
+          child: Icon(
+            isInCart ? Icons.check_rounded : Icons.add_rounded,
+            color: Colors.white,
+            size: 18,
+          ),
         ),
       ),
     );

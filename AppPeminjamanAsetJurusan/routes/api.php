@@ -43,6 +43,7 @@ Route::get('/public-storage/{path}', function ($path) {
 // Auth routes
 Route::post('/login', [AuthController::class, 'login']);
 
+Route::middleware('auth:sanctum')->group(function () {
     // Logout
     Route::post('/logout', [AuthController::class, 'logout']);
 

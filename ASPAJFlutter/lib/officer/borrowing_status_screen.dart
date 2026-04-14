@@ -53,15 +53,10 @@ class _BorrowingStatusScreenState extends State<BorrowingStatusScreen> {
   ) {
     List<Borrowing> filtered = borrowings;
 
-    // For officers, filter items based on jurusan
+    // For officers, filter borrowings based on jurusan
     if (userRole == 'officers' && officerJurusan.isNotEmpty) {
       filtered = filtered.where((borrowing) {
         return borrowing.items.any((item) => _itemMatchesJurusan(item, officerJurusan));
-      }).toList();
-      // Also filter the items within each borrowing
-      filtered = filtered.map((borrowing) {
-        final filteredItems = borrowing.items.where((item) => _itemMatchesJurusan(item, officerJurusan)).toList();
-        return borrowing.copyWith(items: filteredItems);
       }).toList();
     }
 

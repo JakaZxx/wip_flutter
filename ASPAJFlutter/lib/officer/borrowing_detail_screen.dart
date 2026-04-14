@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'return_screen.dart';
 import '../models/borrowing.dart';
 import '../models/borrowing_item.dart';
 import '../models/commodity.dart';
@@ -97,7 +98,7 @@ class _BorrowingDetailScreenState extends State<BorrowingDetailScreen> {
                   if (_isLoadingCommodities)
                     _buildLoadingState()
                   else
-                    ...borrowing.items.map((item) => _buildItemCard(context, item, userRole)),
+                    ...borrowing.items.map((item) => _buildItemCard(context, item, userRole, borrowing)),
                   const SizedBox(height: 120),
                 ],
               ),
@@ -385,7 +386,7 @@ class _BorrowingDetailScreenState extends State<BorrowingDetailScreen> {
     );
   }
 
-  Widget _buildItemCard(BuildContext context, BorrowingItem item, String? role) {
+  Widget _buildItemCard(BuildContext context, BorrowingItem item, String? role, Borrowing borrowing) {
     final isPending = (item.status ?? '').toLowerCase() == 'pending';
     final isSelected = _selectedItemIds.contains(item.id);
     final canProcess = (role == 'officers' || role == 'admin') && isPending;
@@ -428,9 +429,55 @@ class _BorrowingDetailScreenState extends State<BorrowingDetailScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(width: 8),
                   _buildSmallStatusBadge(item.status),
                 ],
               ),
+              if (canProcess) ...[
+                const SizedBox(height: 16),
+                const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    if (item.status == 'pending') ...[
+                      Expanded(
+                        child: _buildItemControlButton(
+                          'TOLAK',
+                          Icons.close_rounded,
+                          const Color(0xFFEF4444),
+                          () => _processBulkAction(context, borrowing, 'reject', singleItemId: item.id),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildItemControlButton(
+                          'SETUJUI',
+                          Icons.check_rounded,
+                          const Color(0xFF10B981),
+                          () => _processBulkAction(context, borrowing, 'approve', singleItemId: item.id),
+                        ),
+                      ),
+                    ] else if (item.status == 'approved') ...[
+                      Expanded(
+                        child: _buildItemControlButton(
+                          'KEMBALIKAN',
+                          Icons.assignment_return_rounded,
+                          AppTheme.primaryBlue,
+                          () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ReturnScreen(
+                                borrowing: borrowing,
+                                initialSelectedItemIds: [item.id!],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
               if (item.status == 'approved' && role == 'students') ...[
                 const SizedBox(height: 16),
                 _buildActionButton('KEMBALIKAN BARANG', Icons.assignment_return_rounded, Colors.orange, () {
@@ -577,8 +624,11 @@ class _BorrowingDetailScreenState extends State<BorrowingDetailScreen> {
 
   Widget _buildActionZone(BuildContext context, Borrowing b, String? role) {
     if (role == 'students') return const SizedBox.shrink();
-    final hasPendingItems = b.items.any((i) => i.status == 'pending');
-    if (!hasPendingItems && _selectedItemIds.isEmpty) return const SizedBox.shrink();
+    
+    final hasPending = b.items.any((i) => i.status == 'pending');
+    final hasApproved = b.items.any((i) => i.status == 'approved');
+
+    if (!hasPending && !hasApproved) return const SizedBox.shrink();
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
@@ -589,16 +639,52 @@ class _BorrowingDetailScreenState extends State<BorrowingDetailScreen> {
       ),
       child: _isProcessing
           ? const Center(child: CircularProgressIndicator())
-          : Row(
+          : Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: _buildBulkActionBtn('TOLAK', Icons.close_rounded, const Color(0xFFEF4444), () => _processBulkAction(context, b, 'reject')),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 2,
-                  child: _buildBulkActionBtn('SETUJUI TERPILIH', Icons.check_rounded, const Color(0xFF10B981), () => _processBulkAction(context, b, 'approve')),
-                ),
+                if (hasPending)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildBulkActionBtn('TOLAK', Icons.close_rounded, const Color(0xFFEF4444), () => _processBulkAction(context, b, 'reject')),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 2,
+                        child: _buildBulkActionBtn('SETUJUI TERPILIH', Icons.check_rounded, const Color(0xFF10B981), () => _processBulkAction(context, b, 'approve')),
+                      ),
+                    ],
+                  ),
+                if (hasPending && hasApproved) const SizedBox(height: 12),
+                if (hasApproved)
+                  SizedBox(
+                    width: double.infinity,
+                    child: _buildBulkActionBtn(
+                      'KEMBALIKAN TERPILIH', 
+                      Icons.assignment_return_rounded, 
+                      AppTheme.primaryBlue, 
+                      () {
+                        final targets = _selectedItemIds.isEmpty 
+                          ? b.items.where((i) => i.status == 'approved').map((i) => i.id!).toList()
+                          : _selectedItemIds.toList();
+                        
+                        if (targets.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pilih barang yang sudah disetujui')));
+                          return;
+                        }
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ReturnScreen(
+                              borrowing: b,
+                              initialSelectedItemIds: targets,
+                            ),
+                          ),
+                        ).then((_) => setState(() {})); // Refresh on return
+                      }
+                    ),
+                  ),
               ],
             ),
     );
@@ -620,6 +706,37 @@ class _BorrowingDetailScreenState extends State<BorrowingDetailScreen> {
     );
   }
 
+  Widget _buildItemControlButton(String label, IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: GoogleFonts.outfit(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: color,
+                letterSpacing: 1,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _toggleSelection(int id) {
     setState(() {
       if (_selectedItemIds.contains(id)) {
@@ -630,10 +747,12 @@ class _BorrowingDetailScreenState extends State<BorrowingDetailScreen> {
     });
   }
 
-  Future<void> _processBulkAction(BuildContext context, Borrowing b, String action) async {
-    final targets = _selectedItemIds.isEmpty 
-        ? b.items.where((i) => (i.status ?? '').toLowerCase() == 'pending').map((i) => i.id!).toList() 
-        : _selectedItemIds.toList();
+  Future<void> _processBulkAction(BuildContext context, Borrowing b, String action, {int? singleItemId}) async {
+    final targets = singleItemId != null 
+        ? [singleItemId] 
+        : (_selectedItemIds.isEmpty 
+            ? b.items.where((i) => (i.status ?? '').toLowerCase() == 'pending').map((i) => i.id!).toList() 
+            : _selectedItemIds.toList());
     
     if (targets.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
