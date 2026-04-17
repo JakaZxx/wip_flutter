@@ -14,8 +14,8 @@ import 'officer/borrowing_status_screen.dart';
 import 'student/borrowing_create_screen.dart';
 import 'officer/return_screen.dart';
 import 'screens/profile_screen.dart';
-import 'admin/admin_users_screen.dart';
 import 'admin/admin_classes_screen.dart';
+import 'admin/activity_log_screen.dart';
 import 'student/checkout_screen.dart';
 import 'screens/help_support_screen.dart';
 import 'widgets/navigation_drawer.dart';
@@ -61,6 +61,7 @@ class MyApp extends StatelessWidget {
           '/profile': (context) => const ProfileScreen(),
           '/admin-users': (context) => const AdminUsersScreen(),
           '/admin-classes': (context) => const AdminClassesScreen(),
+          '/admin-logs': (context) => const ActivityLogScreen(),
           '/checkout': (context) => const CheckoutScreen(),
           '/help': (context) => const HelpSupportScreen(),
           '/officer-returns': (context) => const BorrowingStatusScreen(),

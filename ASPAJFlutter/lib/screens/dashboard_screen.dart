@@ -243,8 +243,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _ActionData('Kelola Pengguna', FontAwesomeIcons.idCard, () => Navigator.pushNamed(context, '/admin-users')),
           _ActionData('Daftar Aset', FontAwesomeIcons.database, () => context.read<NavigationProvider>().setSelectedIndex(1)),
           _ActionData('Kelola Kelas', FontAwesomeIcons.graduationCap, () => Navigator.pushNamed(context, '/admin-classes')),
-          _ActionData('Aktivitas Sistem', FontAwesomeIcons.chartLine, () {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Log aktivtas sedang disinkronkan...')));
+          _ActionData('Aktivitas Sistem', FontAwesomeIcons.clockRotateLeft, () {
+            Navigator.pushNamed(context, '/admin-logs');
           }),
         ]),
       ],

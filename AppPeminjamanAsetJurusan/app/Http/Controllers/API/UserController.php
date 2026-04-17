@@ -53,51 +53,59 @@ class UserController extends Controller
      */
     public function updateProfile(Request $request)
     {
-        Log::info('UserController::updateProfile started');
+        $user = auth('sanctum')->user();
+        Log::info('UserController::updateProfile started', [
+            'user_id' => $user ? $user->id : 'none',
+            'user_type' => $user ? get_class($user) : 'none',
+            'has_file' => $request->hasFile('profile_picture')
+        ]);
+
         try {
-            $user = auth('sanctum')->user();
             if (!$user) {
-                Log::warning('UserController::updateProfile user not authenticated');
-                Log::info('UserController::updateProfile ended');
-                return response()->json([
-                    'success' => false,
-                    'message' => 'User not authenticated'
-                ], 401);
+                return response()->json(['success' => false, 'message' => 'User not authenticated'], 401);
             }
 
-            // Validator only for profile_picture
             $validator = Validator::make($request->all(), [
-                'profile_picture' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048' // 2MB max
+                'profile_picture' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120' // Increased to 5MB
             ]);
 
             if ($validator->fails()) {
                 Log::warning('UserController::updateProfile validation failed', ['errors' => $validator->errors()]);
-                Log::info('UserController::updateProfile ended');
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validasi gagal: ' . $validator->errors()->first(),
-                    'data' => null
-                ], 400);
+                return response()->json(['success' => false, 'message' => 'Validasi gagal: ' . $validator->errors()->first()], 400);
             }
 
-            // Handle profile picture upload
-            if ($request->hasFile('profile_picture') && $request->file('profile_picture')->isValid()) {
-                // Delete old image if exists
-                if ($user->profile_picture && file_exists(public_path('storage/profiles/' . $user->profile_picture))) {
-                    unlink(public_path('storage/profiles/' . $user->profile_picture));
+            if ($request->hasFile('profile_picture')) {
+                $file = $request->file('profile_picture');
+                if (!$file->isValid()) {
+                    Log::error('UserController::updateProfile file is not valid');
+                    return response()->json(['success' => false, 'message' => 'File tidak valid'], 400);
+                }
+
+                // Delete old image
+                if ($user->profile_picture) {
+                    $oldPath = 'profiles/' . $user->profile_picture;
+                    if (Storage::disk('public')->exists($oldPath)) {
+                        Storage::disk('public')->delete($oldPath);
+                    }
                 }
 
                 // Store new image
-                $file = $request->file('profile_picture');
                 $filename = time() . '_' . $file->getClientOriginalName();
-                $file->storeAs('profiles', $filename, 'public');
+                $path = $file->storeAs('profiles', $filename, 'public');
+                Log::info('UserController::updateProfile file stored', ['path' => $path, 'filename' => $filename]);
 
                 $user->profile_picture = $filename;
                 $user->save();
             }
 
-            // Reload user to get updated data
-            $user->load('student.schoolClass');
+            // Return updated user data
+            if ($user instanceof User) {
+                $user->load('student.schoolClass');
+            } else if ($user instanceof Student) {
+                $user->load('schoolClass');
+                // Ensure role is present for frontend
+                $user->role = 'students';
+            }
 
             Log::info('UserController::updateProfile ended successfully');
             return response()->json([
@@ -106,12 +114,8 @@ class UserController extends Controller
                 'data' => $user
             ]);
         } catch (\Exception $e) {
-            Log::error('UserController::updateProfile error', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            Log::info('UserController::updateProfile ended with error');
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan saat memperbarui profil'
-            ], 500);
+            Log::error('UserController::updateProfile error', ['message' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
         }
     }
 

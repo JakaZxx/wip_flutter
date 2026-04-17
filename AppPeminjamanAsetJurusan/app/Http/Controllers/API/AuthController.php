@@ -38,30 +38,47 @@ class AuthController extends Controller
 
             $credentials = $request->only('email', 'password');
 
-            // Find user by email or nis
+            // 1. Try to find in User table (Admin/Officer)
             $user = \App\Models\User::where('email', $credentials['email'])
-                ->orWhere('nis', $credentials['email'])
                 ->first();
 
             if ($user && \Illuminate\Support\Facades\Hash::check($credentials['password'], $user->password)) {
-                Log::info('AuthController::login: Password check passed', ['user_id' => $user->id]);
-                $user->load('student.schoolClass');
+                Log::info('AuthController::login: User found and password correct', ['user_id' => $user->id, 'role' => $user->role]);
                 $token = $user->createToken('API Token')->plainTextToken;
-                Log::info('AuthController::login ended successfully', ['user_role' => $user->role]);
                 return response()->json([
                     'success' => true,
                     'message' => 'Login successful',
                     'data' => $user,
                     'token' => $token
                 ]);
-            } else {
-                Log::warning('AuthController::login failed: Invalid credentials or password mismatch', ['email' => $request->email, 'user_found' => ($user != null)]);
-                Log::info('AuthController::login ended');
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid email/NIS or password'
-                ], 401);
             }
+
+            // 2. Try to find in Student table (Siswa) - search by email or nis
+            $student = \App\Models\Student::where('email', $credentials['email'])
+                ->orWhere('nis', $credentials['email'])
+                ->first();
+
+            if ($student && \Illuminate\Support\Facades\Hash::check($credentials['password'], $student->password)) {
+                Log::info('AuthController::login: Student found and password correct', ['student_id' => $student->id]);
+                $student->load('schoolClass');
+                $token = $student->createToken('API Token')->plainTextToken;
+                
+                // Add role for frontend compatibility if needed
+                $student->role = 'students';
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Login successful',
+                    'data' => $student,
+                    'token' => $token
+                ]);
+            }
+
+            Log::warning('AuthController::login failed: Invalid credentials', ['identifier' => $request->email]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid credentials'
+            ], 401);
         } catch (\Exception $e) {
             Log::error('AuthController::login error', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             Log::info('AuthController::login ended with error');

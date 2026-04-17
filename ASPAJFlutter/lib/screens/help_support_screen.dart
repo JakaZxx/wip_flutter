@@ -2,7 +2,10 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../services/bug_report_service.dart';
+import '../theme/app_theme.dart';
 
 class HelpSupportScreen extends StatefulWidget {
   const HelpSupportScreen({super.key});
@@ -18,8 +21,6 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
   final TextEditingController _descriptionController = TextEditingController();
   XFile? _selectedImage;
   bool _isSubmitting = false;
-  String? _successMessage;
-  String? _errorMessage;
 
   final List<String> _deviceTypes = ['mobile', 'desktop'];
   final List<String> _bugTypes = ['tampilan', 'sistem'];
@@ -32,301 +33,263 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
     if (image != null) {
-      setState(() {
-        _selectedImage = image;
-      });
+      setState(() => _selectedImage = image);
     }
   }
 
-  Future<void> _submitBugReport() async {
+  Future<void> _submitReport() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      _isSubmitting = true;
-      _successMessage = null;
-      _errorMessage = null;
-    });
+    setState(() => _isSubmitting = true);
 
     try {
       final bugReportService = BugReportService();
-
-      // Prepare data
       final Map<String, dynamic> bugData = {
         'device_type': _selectedDeviceType,
         'bug_type': _selectedBugType,
         'bug_description': _descriptionController.text,
       };
 
-      // Handle image upload if selected
       if (_selectedImage != null) {
         if (kIsWeb) {
-          // For web, read as bytes
-          final Uint8List bytes = await _selectedImage!.readAsBytes();
-          bugData['bug_image_path'] = bytes;
+          bugData['bug_image_path'] = await _selectedImage!.readAsBytes();
           bugData['image_filename'] = _selectedImage!.name;
         } else {
-          // For mobile, use file path
           bugData['bug_image_path'] = _selectedImage!.path;
         }
       }
 
-      // Submit bug report
       await bugReportService.submitBugReport(bugData);
 
-      setState(() {
-        _successMessage = 'Laporan bug berhasil dikirim.';
-        _selectedDeviceType = null;
-        _selectedBugType = null;
-        _descriptionController.clear();
-        _selectedImage = null;
-      });
-
-      // Clear success message after 3 seconds
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) {
-          setState(() {
-            _successMessage = null;
-          });
-        }
-      });
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 60),
+            content: Text('Laporan berhasil dikirim! Tim audit akan segera memproses informasi ini.', 
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(fontSize: 14),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                child: Text('MENGERTI', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppTheme.primaryBlue)),
+              )
+            ],
+          ),
+        );
+      }
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Gagal mengirim laporan bug: ${e.toString()}';
-      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Sinkronisasi gagal: $e'),
+          backgroundColor: AppTheme.dangerRed,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
     } finally {
-      setState(() {
-        _isSubmitting = false;
-      });
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Bantuan & Dukungan'),
-        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+      backgroundColor: const Color(0xFFF1F5F9),
+      body: CustomScrollView(
+        slivers: [
+          _buildSliverAppBar(),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionHeader('IDENTIFIKASI ANOMALI', 'Detail Perangkat & Jenis Masalah'),
+                    const SizedBox(height: 20),
+                    _buildDeviceAndBugTypeFields(),
+                    const SizedBox(height: 32),
+                    _buildSectionHeader('BUKTI VISUAL', 'Lampirkan Screenshot Jika Ada'),
+                    const SizedBox(height: 16),
+                    _buildImagePicker(),
+                    const SizedBox(height: 32),
+                    _buildSectionHeader('DESKRIPSI MASALAH', 'Jelaskan Kronologi Secara Detail'),
+                    const SizedBox(height: 16),
+                    _buildDescriptionField(),
+                    const SizedBox(height: 48),
+                    _buildSubmitButton(),
+                    const SizedBox(height: 100),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Success Message
-              if (_successMessage != null)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    border: Border.all(color: Colors.green),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.check_circle, color: Colors.green),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _successMessage!,
-                          style: const TextStyle(color: Colors.green),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+    );
+  }
 
-              // Error Message
-              if (_errorMessage != null)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    border: Border.all(color: Colors.red),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.error, color: Colors.red),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _errorMessage!,
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Device Type Dropdown
-              const Text(
-                'Device',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedDeviceType,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey.shade50,
-                ),
-                hint: const Text('Pilih Device'),
-                items: _deviceTypes.map((type) {
-                  return DropdownMenuItem(
-                    value: type,
-                    child: Text(type == 'mobile' ? 'Mobile' : 'Desktop'),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedDeviceType = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Tipe perangkat wajib diisi';
-                  }
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 16),
-
-              // Bug Type Dropdown
-              const Text(
-                'Jenis Bug',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedBugType,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey.shade50,
-                ),
-                hint: const Text('Pilih Jenis Bug'),
-                items: _bugTypes.map((type) {
-                  return DropdownMenuItem(
-                    value: type,
-                    child: Text(type == 'tampilan' ? 'Tampilan' : 'Sistem'),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedBugType = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Jenis bug wajib diisi';
-                  }
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 16),
-
-              // Bug Image Picker
-              const Text(
-                'Gambar Bug (Opsional)',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              InkWell(
-                onTap: _pickImage,
-                child: Container(
-                  height: 120,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.grey.shade50,
-                  ),
-                  child: _selectedImage != null
-                      ? kIsWeb
-                          ? FutureBuilder<Uint8List>(
-                              future: _selectedImage!.readAsBytes(),
-                              builder: (context, snapshot) {
-                                if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-                                  return Image.memory(snapshot.data!, fit: BoxFit.cover);
-                                }
-                                return const Center(child: CircularProgressIndicator());
-                              },
-                            )
-                          : Image.file(File(_selectedImage!.path), fit: BoxFit.cover)
-                      : const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.add_photo_alternate, size: 48, color: Colors.grey),
-                            SizedBox(height: 8),
-                            Text('Ketuk untuk memilih gambar', style: TextStyle(color: Colors.grey)),
-                          ],
-                        ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Bug Description
-              const Text(
-                'Deskripsi Bug',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _descriptionController,
-                maxLines: 6,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey.shade50,
-                  hintText: 'Jelaskan bug yang Anda temukan...',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Deskripsi bug wajib diisi';
-                  }
-                  if (value.length > 2000) {
-                    return 'Description must be less than 2000 characters';
-                  }
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 24),
-
-              // Submit Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isSubmitting ? null : _submitBugReport,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: _isSubmitting
-                      ? const CircularProgressIndicator()
-                      : const Text('Kirim Laporan Bug'),
-                ),
-              ),
-            ],
+  Widget _buildSliverAppBar() {
+    return SliverAppBar(
+      expandedHeight: 180,
+      pinned: true,
+      elevation: 0,
+      backgroundColor: AppTheme.primaryBlue,
+      flexibleSpace: FlexibleSpaceBar(
+        centerTitle: true,
+        title: Text('LAPORAN MASALAH', style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 2)),
+        background: Container(
+          decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
+          child: Opacity(
+            opacity: 0.1,
+            child: Center(child: FaIcon(FontAwesomeIcons.bugSlash, size: 100, color: Colors.white)),
           ),
         ),
+      ),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+        onPressed: () => Navigator.pop(context),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, String subtitle) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w900, color: const Color(0xFF475569), letterSpacing: 1.5)),
+        const SizedBox(height: 4),
+        Text(subtitle, style: GoogleFonts.poppins(fontSize: 10, color: const Color(0xFF94A3B8))),
+      ],
+    );
+  }
+
+  Widget _buildDeviceAndBugTypeFields() {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildDropdown(
+            value: _selectedDeviceType,
+            hint: 'Device',
+            items: _deviceTypes,
+            onChanged: (v) => setState(() => _selectedDeviceType = v),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: _buildDropdown(
+            value: _selectedBugType,
+            hint: 'Jenis Bug',
+            items: _bugTypes,
+            onChanged: (v) => setState(() => _selectedBugType = v),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDropdown({String? value, required String hint, required List<String> items, required Function(String?) onChanged}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10)],
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButtonFormField<String>(
+          value: value,
+          hint: Text(hint, style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF94A3B8))),
+          items: items.map((t) => DropdownMenuItem(value: t, child: Text(t.toUpperCase(), style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold)))).toList(),
+          onChanged: onChanged,
+          decoration: const InputDecoration(border: InputBorder.none),
+          validator: (v) => v == null ? 'Wajib' : null,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImagePicker() {
+    return InkWell(
+      onTap: _pickImage,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        height: 180,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFE2E8F0), width: 2, style: BorderStyle.solid),
+        ),
+        child: _selectedImage != null
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: kIsWeb
+                    ? Image.network(_selectedImage!.path, fit: BoxFit.cover)
+                    : Image.file(File(_selectedImage!.path), fit: BoxFit.cover),
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(color: AppTheme.primaryBlue.withValues(alpha: 0.05), shape: BoxShape.circle),
+                    child: const FaIcon(FontAwesomeIcons.image, color: AppTheme.primaryBlue, size: 30),
+                  ),
+                  const SizedBox(height: 16),
+                  Text('KETUK UNTUK UNGGAH BUKTI', style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w900, color: const Color(0xFF94A3B8), letterSpacing: 1)),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _buildDescriptionField() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20)],
+      ),
+      child: TextFormField(
+        controller: _descriptionController,
+        maxLines: 6,
+        style: GoogleFonts.poppins(fontSize: 14),
+        decoration: InputDecoration(
+          hintText: 'Jelaskan secara mendalam anomali yang ditemukan...',
+          hintStyle: GoogleFonts.poppins(color: const Color(0xFFCBD5E1), fontSize: 13),
+          contentPadding: const EdgeInsets.all(20),
+          border: InputBorder.none,
+        ),
+        validator: (v) => v == null || v.isEmpty ? 'Keterangan wajib diisi' : null,
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 65,
+      child: ElevatedButton(
+        onPressed: _isSubmitting ? null : _submitReport,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.primaryBlue,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          elevation: 10,
+          shadowColor: AppTheme.primaryBlue.withValues(alpha: 0.4),
+        ),
+        child: _isSubmitting
+            ? const CircularProgressIndicator(color: Colors.white)
+            : Text('KIRIM LAPORAN SISTEM', style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 2)),
       ),
     );
   }

@@ -74,7 +74,20 @@ class _AssetsScreenState extends State<AssetsScreen> {
                 if (_selectedCategory == 'All') return true;
                 if (_selectedCategory == 'Tersedia') return c.stock > 0;
                 if (_selectedCategory == 'Habis') return c.stock <= 0;
-                return c.jurusan == _selectedCategory;
+                
+                // Normalisasi pengecekan jurusan
+                final itemJurusan = (c.jurusan ?? '').toLowerCase();
+                final targetFilter = _selectedCategory.toLowerCase();
+                
+                // Mappings
+                if (targetFilter == 'rpl' && (itemJurusan.contains('rekayasa') || itemJurusan == 'rpl')) return true;
+                if (targetFilter == 'tkj' && (itemJurusan.contains('jaringan') || itemJurusan == 'tkj')) return true;
+                if (targetFilter == 'dkv' && (itemJurusan.contains('komunikasi visual') || itemJurusan == 'dkv')) return true;
+                if (targetFilter == 'toi' && (itemJurusan.contains('otomasi') || itemJurusan == 'toi')) return true;
+                if (targetFilter == 'titl' && (itemJurusan.contains('tenaga listrik') || itemJurusan == 'titl')) return true;
+                if (targetFilter == 'tav' && (itemJurusan.contains('audio video') || itemJurusan == 'tav')) return true;
+
+                return itemJurusan == targetFilter;
               }).toList();
 
               if (filtered.isEmpty) {
@@ -157,47 +170,43 @@ class _AssetsScreenState extends State<AssetsScreen> {
       builder: (context, provider, child) {
         final count = provider.cartItems.length;
         return Center(
-          child: Padding(
-            padding: const EdgeInsets.only(right: 4.0),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                InkWell(
-                  onTap: () => Navigator.of(context).pushNamed('/checkout'),
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Center(
-                      child: Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 22),
-                    ),
-                  ),
-                ),
-                if (count > 0)
-                  Positioned(
-                    right: -5,
-                    top: -5,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEF4444),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppTheme.primaryBlue, width: 1.5),
-                      ),
-                      constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
-                      child: Center(
-                        child: Text(
-                          '$count',
-                          style: GoogleFonts.outfit(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+          child: InkWell(
+            onTap: () => Navigator.of(context).pushNamed('/checkout'),
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 22),
+                  if (count > 0)
+                    Positioned(
+                      right: -5,
+                      top: -5,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF4444),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppTheme.primaryBlue, width: 1.5),
+                        ),
+                        constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+                        child: Center(
+                          child: Text(
+                            '$count',
+                            style: GoogleFonts.outfit(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         );
