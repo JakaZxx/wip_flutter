@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../providers/commodity_provider.dart';
 import '../providers/borrowing_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/navigation_provider.dart';
 import '../models/commodity.dart';
 import '../screens/add_asset_screen.dart';
 import '../screens/edit_asset_screen.dart';
@@ -120,10 +121,10 @@ class _AssetsScreenState extends State<AssetsScreen> {
       pinned: true,
       elevation: 0,
       leading: isAdminOrOfficer
-        ? Builder(builder: (context) => IconButton(
+        ? IconButton(
             icon: const Icon(Icons.sort_rounded, color: Colors.white, size: 28),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ))
+            onPressed: () => context.read<NavigationProvider>().openDrawer(),
+          )
         : null,
       flexibleSpace: FlexibleSpaceBar(
         centerTitle: true,

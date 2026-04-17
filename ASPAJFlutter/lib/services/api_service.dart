@@ -14,7 +14,7 @@ import '../models/dashboard_stats.dart';
 
 class ApiService {
   // Gunakan IP lokal komputer (172.16.101.36) agar bisa diakses dari HP
-  static const String _defaultIP = '172.16.101.36'; 
+  static const String _defaultIP = '192.168.0.101'; 
   
   static String get baseUrl => 'http://$_defaultIP:8000/api';
   static String get baseStorageUrl => 'http://$_defaultIP:8000';

@@ -80,14 +80,19 @@ class OfficerAssetController extends Controller
             'code' => 'required|string|max:255|unique:commodities,code',
             'stock' => 'required|integer|min:0',
             'lokasi' => 'required|string',
+            'merk' => 'nullable|string|max:255',
+            'harga_satuan' => 'nullable|numeric|min:0',
+            'sumber' => 'nullable|string|max:255',
+            'tahun' => 'nullable|integer',
+            'deskripsi' => 'nullable|string',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10000',
         ]);
 
         $data['jurusan'] = $user->jurusan;
 
         if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('commodities', 'public');
-            $data['photo'] = $path; // Will store 'commodities/filename.jpg'
+            $path = $request->file('photo')->store('public/commodities');
+            $data['photo'] = $path;
         }
 
         Commodity::create($data);
@@ -104,8 +109,7 @@ class OfficerAssetController extends Controller
         // Allow editing if:
         // 1. Officer has no specific jurusan assigned (NULL) - can edit any asset
         // 2. Officer's jurusan matches the commodity's jurusan
-        // 3. Officer is an admin (though this should be handled by middleware)
-        if ($user->jurusan !== null && $commodity->jurusan !== $user->jurusan) {
+        if ($user->jurusan !== null && strtolower(trim($commodity->getRawOriginal('jurusan'))) !== strtolower(trim($user->jurusan))) {
             return redirect()->route('officers.assets.index')->with('error', 'Anda tidak memiliki akses untuk mengedit barang ini.');
         }
 
@@ -117,11 +121,21 @@ class OfficerAssetController extends Controller
         $commodity = Commodity::findOrFail($id);
         $user = Auth::user();
 
+        // Check access before update
+        if ($user->jurusan !== null && strtolower(trim($commodity->getRawOriginal('jurusan'))) !== strtolower(trim($user->jurusan))) {
+            return redirect()->route('officers.assets.index')->with('error', 'Anda tidak memiliki akses untuk mengedit barang ini.');
+        }
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:255|unique:commodities,code,' . $commodity->id,
             'stock' => 'required|integer|min:0',
-            'lokasi' => 'required|string',  
+            'lokasi' => 'required|string',
+            'merk' => 'nullable|string|max:255',
+            'harga_satuan' => 'nullable|numeric|min:0',
+            'sumber' => 'nullable|string|max:255',
+            'tahun' => 'nullable|integer',
+            'deskripsi' => 'nullable|string',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10000',
         ]);
 
@@ -130,10 +144,10 @@ class OfficerAssetController extends Controller
         if ($request->hasFile('photo')) {
             // Delete old photo if it exists
             if ($commodity->photo) {
-                Storage::disk('public')->delete($commodity->photo);
+                Storage::delete($commodity->photo);
             }
 
-            $path = $request->file('photo')->store('commodities', 'public');
+            $path = $request->file('photo')->store('public/commodities');
             $data['photo'] = $path;
         }
 

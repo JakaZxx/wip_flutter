@@ -75,42 +75,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (user == null) return const SizedBox.shrink();
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
-      body: Consumer<DashboardProvider>(
-        builder: (context, dashboardProvider, child) {
-          final stats = dashboardProvider.dashboardStats;
+    return Consumer<DashboardProvider>(
+      builder: (context, dashboardProvider, child) {
+        final stats = dashboardProvider.dashboardStats;
 
-          return RefreshIndicator(
-            onRefresh: _loadDashboardData,
-            color: AppTheme.primaryBlue,
-            edgeOffset: 160,
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                _buildSliverAppBar(user),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (dashboardProvider.isLoading)
-                          _buildLoadingState()
-                        else if (stats != null)
-                          _buildDashboardContent(user, stats)
-                        else
-                          _buildErrorState(),
-                        const SizedBox(height: 120),
-                      ],
-                    ),
+        return RefreshIndicator(
+          onRefresh: _loadDashboardData,
+          color: AppTheme.primaryBlue,
+          edgeOffset: 160,
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              _buildSliverAppBar(user),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (dashboardProvider.isLoading)
+                        _buildLoadingState()
+                      else if (stats != null)
+                        _buildDashboardContent(user, stats)
+                      else
+                        _buildErrorState(),
+                      const SizedBox(height: 120),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          );
-        },
-      ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -121,10 +118,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       elevation: 0,
       backgroundColor: AppTheme.primaryBlue,
       leading: !user.isStudent
-        ? Builder(builder: (context) => IconButton(
+        ? IconButton(
             icon: const Icon(Icons.sort_rounded, color: Colors.white, size: 28),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ))
+            onPressed: () => context.read<NavigationProvider>().openDrawer(),
+          )
         : null,
       flexibleSpace: FlexibleSpaceBar(
         background: Container(

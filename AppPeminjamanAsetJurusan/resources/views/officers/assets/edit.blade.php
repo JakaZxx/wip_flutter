@@ -205,9 +205,9 @@
 
             <div class="form-group">
                 <label for="photo">Foto Barang</label>
-                @if($commodity->photo)
+                @if($commodity->photo_url)
                     <div style="margin-bottom: 10px;">
-                        <img src="{{ $commodity->photo }}" alt="{{ $commodity->name }}" width="100" style="border-radius: 5px;">
+                        <img src="{{ $commodity->photo_url }}" alt="{{ $commodity->name }}" width="100" style="border-radius: 5px;">
                     </div>
                 @endif
                 <input type="file" id="photo" name="photo">

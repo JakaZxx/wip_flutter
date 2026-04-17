@@ -198,7 +198,7 @@
                         <input type="date" id="borrow_date" name="borrow_date" class="form-control" required readonly>
                     </div>
                     <div class="form-group">
-                        <label for="borrow_time" class="form-label">Waktu Peminjaman (Opsional)</label>
+                        <label for="borrow_time" class="form-label">Waktu Peminjaman</label>
                         <input type="time" id="borrow_time" name="borrow_time" class="form-control" required readonly>
                     </div>
                     <div class="form-group">

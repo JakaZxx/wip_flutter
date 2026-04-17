@@ -165,6 +165,7 @@ class _MainScreenState extends State<MainScreen> {
     final useDrawer = userRole == 'officers' || userRole == 'admin';
 
     return Scaffold(
+      key: navigationProvider.scaffoldKey,
       backgroundColor: const Color(0xFFF1F5F9),
       drawer: useDrawer ? const AppNavigationDrawer() : null,
       body: _screens[navigationProvider.selectedIndex],

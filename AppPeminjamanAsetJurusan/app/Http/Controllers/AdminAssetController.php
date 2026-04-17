@@ -77,6 +77,11 @@ class AdminAssetController extends Controller
             'stock' => 'required|integer|min:0',
             'jurusan' => 'required|string',
             'lokasi' => 'required|string',
+            'merk' => 'nullable|string|max:255',
+            'harga_satuan' => 'nullable|numeric|min:0',
+            'sumber' => 'nullable|string|max:255',
+            'tahun' => 'nullable|integer',
+            'deskripsi' => 'nullable|string',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10000',
         ]);
 
@@ -84,6 +89,8 @@ class AdminAssetController extends Controller
             $path = $request->file('photo')->store('public/commodities');
             $data['photo'] = $path;
         }
+
+        Commodity::create($data);
 
         return redirect()->route('admin.assets.index', ['jurusan' => $request->jurusan])
                          ->with('success', 'Barang berhasil ditambahkan.');
@@ -105,6 +112,11 @@ class AdminAssetController extends Controller
             'stock' => 'required|integer|min:0',
             'jurusan' => 'required|string',
             'lokasi' => 'required|string',
+            'merk' => 'nullable|string|max:255',
+            'harga_satuan' => 'nullable|numeric|min:0',
+            'sumber' => 'nullable|string|max:255',
+            'tahun' => 'nullable|integer',
+            'deskripsi' => 'nullable|string',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10000',
         ]);
 
@@ -126,9 +138,13 @@ class AdminAssetController extends Controller
 
     public function destroy($id)
     {
-        $commodity = Commodity::findOrFail($id);
-        $commodity->delete();
-        return redirect()->route('admin.assets.index')->with('success', 'Barang berhasil dihapus.');
+        try {
+            $commodity = Commodity::findOrFail($id);
+            $commodity->delete();
+            return redirect()->back()->with('success', 'Barang berhasil dihapus.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menghapus barang: ' . $e->getMessage());
+        }
     }
 
     public function detail($id)

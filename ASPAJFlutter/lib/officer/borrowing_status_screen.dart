@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../providers/borrowing_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/class_provider.dart';
+import '../providers/navigation_provider.dart';
 import '../models/borrowing.dart';
 import '../models/borrowing_item.dart';
 import '../theme/app_theme.dart';
@@ -137,10 +138,10 @@ class _BorrowingStatusScreenState extends State<BorrowingStatusScreen> {
       elevation: 0,
       backgroundColor: AppTheme.primaryBlue,
       leading: (role == 'officers' || role == 'admin')
-        ? Builder(builder: (context) => IconButton(
+        ? IconButton(
             icon: const Icon(Icons.sort_rounded, color: Colors.white, size: 28),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ))
+            onPressed: () => context.read<NavigationProvider>().openDrawer(),
+          )
         : null,
       flexibleSpace: FlexibleSpaceBar(
         centerTitle: true,

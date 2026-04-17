@@ -45,7 +45,7 @@ class BugReportController extends Controller
         }
 
         // Send bug report email to admin@example.com via Mailpit SMTP
-        Mail::to('admin@example.com')->send(new BugReportMail($data));
+        Mail::to(env('MAIL_ADMIN_ADDRESS', 'emailadmin@gmail.com'))->send(new BugReportMail($data));
 
         // For demonstration, we'll also store it in session to show it was processed
         session(['last_bug_report' => $data]);

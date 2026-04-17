@@ -204,8 +204,8 @@
             @foreach($borrowing->items as $item)
                 <div class="item-card">
                     <div class="item-info">
-                        @if($item->commodity->photo)
-                            <img src="{{ asset('storage/' . $item->commodity->photo) }}" alt="{{ $item->commodity->name }}" class="item-image">
+                        @if($item->commodity->photo_url)
+                            <img src="{{ $item->commodity->photo_url }}" alt="{{ $item->commodity->name }}" class="item-image">
                         @else
                             <div class="item-image" style="display: flex; align-items: center; justify-content: center; background: #e9ecef;">
                                 <i class="fas fa-image" style="color: #6c757d;"></i>
@@ -238,10 +238,10 @@
             @endforeach
         </div>
 
-        @if($borrowing->status === 'returned' && $borrowing->return_photo)
+        @if($borrowing->status === 'returned' && $borrowing->return_photo_url)
             <div class="return-info">
                 <h6><i class="fas fa-camera"></i> Foto Pengembalian</h6>
-                <p><strong>Foto Kondisi Pengembalian:</strong> <button type="button" class="btn btn-info btn-sm" onclick="window.open('{{ asset('storage/returns/' . $borrowing->return_photo) }}', '_blank')">Lihat Foto</button></p>
+                <p><strong>Foto Kondisi Pengembalian:</strong> <button type="button" class="btn btn-info btn-sm" onclick="window.open('{{ $borrowing->return_photo_url }}', '_blank')">Lihat Foto</button></p>
             </div>
         @endif
     </div>

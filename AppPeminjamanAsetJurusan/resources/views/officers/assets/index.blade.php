@@ -276,8 +276,8 @@
             @foreach($assets as $index => $asset)
                 <div class="asset-card fade-seq" style="animation-delay: {{ 0.5 + ($index * 0.1) }}s;">
                     <div class="asset-photo">
-                        @if($asset->photo)
-                            <img src="{{ $asset->photo }}" alt="{{ $asset->name }}">
+                        @if($asset->photo_url)
+                            <img src="{{ $asset->photo_url }}" alt="{{ $asset->name }}">
                         @else
                             <i class="fas fa-box no-photo"></i>
                         @endif
@@ -459,8 +459,8 @@
 
         modalContent.innerHTML = `
             <div class="modal-photo">
-                ${asset.photo ?
-                    `<img src="${asset.photo}" alt="${asset.name}">` :
+                ${asset.photo_url ?
+                    `<img src="${asset.photo_url}" alt="${asset.name}">` :
                     `<i class="fas fa-box" style="font-size: 64px; color: #dee2e6;"></i>`
                 }
             </div>
