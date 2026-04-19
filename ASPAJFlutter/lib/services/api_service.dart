@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -14,10 +15,17 @@ import '../models/dashboard_stats.dart';
 
 class ApiService {
   // Gunakan IP lokal komputer (192.168.1.11) agar bisa diakses dari HP
-  static const String _defaultIP = '192.168.1.11'; 
+  static const String _defaultIP = '192.168.1.7'; 
   
-  static String get baseUrl => 'http://$_defaultIP:8000/api';
-  static String get baseStorageUrl => 'http://$_defaultIP:8000';
+  static String get _effectiveHost {
+    if (kIsWeb && Uri.base.host.isNotEmpty && Uri.base.host != 'localhost') {
+      return Uri.base.host;
+    }
+    return _defaultIP;
+  }
+
+  static String get baseUrl => 'http://$_effectiveHost:8000/api';
+  static String get baseStorageUrl => 'http://$_effectiveHost:8000';
 
   static String? fixPhotoUrl(String? url) {
     if (url == null || url.isEmpty) return null;
@@ -25,15 +33,28 @@ class ApiService {
     try {
       // If it's already a full URL, ensure it uses the correct IP/host
       if (url.startsWith('http://') || url.startsWith('https://')) {
-        // Replace localhost or 127.0.0.1 with our configured IP if needed
-        String fixedUrl = url.replaceAll('localhost', _defaultIP).replaceAll('127.0.0.1', _defaultIP);
-        return fixedUrl;
+        // Find the host/IP in the URL and normalize it if it's localhost or an internal IP
+        // that doesn't match our current configuration
+        Uri uri = Uri.parse(url);
+        if (uri.host == 'localhost' || uri.host == '127.0.0.1') {
+          url = url.replaceFirst(uri.host, _defaultIP);
+        }
+        
+        // INTERCEPT: If the backend sent a native /storage/ URL, redirect it to our CORS-friendly public-storage API
+        if (url.contains('/storage/')) {
+          url = url.replaceAll('/storage/', '/api/public-storage/');
+        }
+        return url;
       }
 
-      // Handle the 'public/' prefix stored in database
+      // Handle the 'public/' prefix stored in database (usually for assets)
       String cleanPath = url;
       if (url.startsWith('public/')) {
         cleanPath = url.substring(7); // Remove 'public/'
+      } else if (!url.contains('/')) {
+        // If it's a plain filename with no path, it's likely a profile picture
+        // stored in storage/app/public/profiles/
+        cleanPath = 'profiles/$url';
       }
 
       // Map to the dedicated public-storage route in Laravel
@@ -130,6 +151,19 @@ class ApiService {
     }
   }
 
+  // Resend email verification
+  Future<void> resendVerification() async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/email/resend'),
+      headers: await _getHeaders(),
+    );
+
+    if (response.statusCode != 200) {
+      final responseJson = jsonDecode(response.body);
+      throw Exception(responseJson['message'] ?? 'Failed to resend verification email');
+    }
+  }
+
   // Get current user
   Future<User> getCurrentUser() async {
     final response = await http.get(
@@ -160,20 +194,34 @@ class ApiService {
 
   // Get dashboard stats
   Future<DashboardStats> getDashboardStats() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/dashboard'), // Single endpoint for all roles
-      headers: await _getHeaders(),
-    );
+    try {
+      debugPrint('ApiService.getDashboardStats: Requesting dashboard stats...');
+      final response = await http.get(
+        Uri.parse('$baseUrl/dashboard'), // Single endpoint for all roles
+        headers: await _getHeaders(),
+      ).timeout(const Duration(seconds: 10));
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data['success'] == true && data['data'] != null) {
-        return DashboardStats.fromJson(data['data']);
+      debugPrint('ApiService.getDashboardStats: Response status: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['data'] != null) {
+          debugPrint('ApiService.getDashboardStats: Successfully retrieved data');
+          return DashboardStats.fromJson(data['data']);
+        } else {
+          debugPrint('ApiService.getDashboardStats: Server returned success=false or null data: ${data['message']}');
+          throw Exception('Failed to get dashboard stats: ${data['message'] ?? 'Invalid format'}');
+        }
       } else {
-        throw Exception('Failed to get dashboard stats: ${data['message'] ?? 'Invalid format'}');
+        debugPrint('ApiService.getDashboardStats: HTTP error ${response.statusCode}: ${response.body}');
+        throw Exception('Failed to get dashboard stats: Status ${response.statusCode}');
       }
-    } else {
-      throw Exception('Failed to get dashboard stats: ${response.body}');
+    } on TimeoutException {
+      debugPrint('ApiService.getDashboardStats: Request timed out');
+      throw Exception('Koneksi terhenti (Timeout). Pastikan server aktif.');
+    } catch (e) {
+      debugPrint('ApiService.getDashboardStats: Error: $e');
+      rethrow;
     }
   }
 
@@ -227,58 +275,65 @@ class ApiService {
     int? page,
     int? perPage,
   }) async {
-    final queryParams = <String, String>{};
-    if (status != null) queryParams['status'] = status;
-    if (search != null && search.isNotEmpty) queryParams['search'] = search;
-    if (jurusan != null && jurusan.isNotEmpty) queryParams['jurusan'] = jurusan;
-    if (classId != null && classId.isNotEmpty) {
-      queryParams['class_id'] = classId;
-    }
-    if (page != null) queryParams['page'] = page.toString();
-    if (perPage != null) queryParams['per_page'] = perPage.toString();
+    try {
+      final queryParams = <String, String>{};
+      if (status != null) queryParams['status'] = status;
+      if (search != null && search.isNotEmpty) queryParams['search'] = search;
+      if (jurusan != null && jurusan.isNotEmpty) queryParams['jurusan'] = jurusan;
+      if (classId != null && classId.isNotEmpty) {
+        queryParams['class_id'] = classId;
+      }
+      if (page != null) queryParams['page'] = page.toString();
+      if (perPage != null) queryParams['per_page'] = perPage.toString();
 
-    final uri = Uri.parse(
-      '$baseUrl/borrowings',
-    ).replace(queryParameters: queryParams);
-    final response = await http.get(uri, headers: await _getHeaders());
+      final uri = Uri.parse(
+        '$baseUrl/borrowings',
+      ).replace(queryParameters: queryParams);
+      
+      debugPrint('ApiService.getBorrowings: Requesting URI: $uri');
+      
+      final response = await http.get(uri, headers: await _getHeaders())
+          .timeout(const Duration(seconds: 15));
 
-    if (response.statusCode == 200) {
-      final responseJson = jsonDecode(response.body);
-      if (responseJson['success'] == true && responseJson['data'] != null) {
-        final data = responseJson['data'];
-        if (data is List) {
-          // Legacy format without pagination
-          return {
-            'borrowings': data.map((json) => Borrowing.fromJson(json)).toList(),
-            'current_page': 1,
-            'last_page': 1,
-            'total': data.length,
-          };
-        } else if (data is Map && data['data'] != null) {
-          // Paginated format
-          final List<dynamic> borrowingsData = data['data'];
-          return {
-            'borrowings': borrowingsData
-                .map((json) => Borrowing.fromJson(json))
-                .toList(),
-            'current_page': data['current_page'] ?? 1,
-            'last_page': data['last_page'] ?? 1,
-            'total': data['total'] ?? borrowingsData.length,
-          };
+      debugPrint('ApiService.getBorrowings: Response status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final responseJson = jsonDecode(response.body);
+        if (responseJson['success'] == true && responseJson['data'] != null) {
+          final data = responseJson['data'];
+          if (data is List) {
+            // Legacy format without pagination
+            return {
+              'borrowings': data.map((json) => Borrowing.fromJson(json)).toList(),
+              'current_page': 1,
+              'last_page': 1,
+              'total': data.length,
+            };
+          } else if (data is Map && data['data'] != null) {
+            // Paginated format
+            final List<dynamic> borrowingsData = data['data'];
+            return {
+              'borrowings': borrowingsData
+                  .map((json) => Borrowing.fromJson(json))
+                  .toList(),
+              'current_page': data['current_page'] ?? 1,
+              'last_page': data['last_page'] ?? 1,
+              'total': data['total'] ?? borrowingsData.length,
+            };
+          } else {
+            throw Exception('Invalid data structure in response');
+          }
         } else {
-          throw Exception('Invalid response format: ${response.body}');
+          throw Exception(responseJson['message'] ?? 'Unknown server error');
         }
       } else {
-        debugPrint(
-          'ApiService.getBorrowings: Invalid response format: ${response.body}',
-        );
-        throw Exception('Invalid response format: ${response.body}');
+        throw Exception('Server error: ${response.statusCode}');
       }
-    } else {
-      debugPrint(
-        'ApiService.getBorrowings: Failed with status ${response.statusCode}: ${response.body}',
-      );
-      throw Exception('Failed to get borrowings: ${response.body}');
+    } on TimeoutException {
+      throw Exception('Permintaan data peminjaman timeout. Periksa jaringan Anda.');
+    } catch (e) {
+      debugPrint('ApiService.getBorrowings Error: $e');
+      rethrow;
     }
   }
 

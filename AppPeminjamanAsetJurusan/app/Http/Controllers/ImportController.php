@@ -72,6 +72,26 @@ class ImportController extends Controller
 
     public function importStudents(Request $request, $schoolClassId)
     {
+        $user = auth()->user();
+        $schoolClass = \App\Models\SchoolClass::findOrFail($schoolClassId);
+
+        if ($user->role == 'officers') {
+            $userJurusan = strtolower($user->jurusan);
+            $classJurusan = strtolower($schoolClass->program_study);
+            
+            $isMatch = str_contains($classJurusan, $userJurusan);
+            if ($userJurusan == 'rpl' && str_contains($classJurusan, 'rekayasa perangkat lunak')) $isMatch = true;
+            if ($userJurusan == 'tkj' && str_contains($classJurusan, 'teknik komputer jaringan')) $isMatch = true;
+            if ($userJurusan == 'dkv' && str_contains($classJurusan, 'desain komunikasi visual')) $isMatch = true;
+            if ($userJurusan == 'toi' && str_contains($classJurusan, 'teknik otomasi industri')) $isMatch = true;
+            if ($userJurusan == 'titl' && str_contains($classJurusan, 'teknik instalasi tenaga listrik')) $isMatch = true;
+            if ($userJurusan == 'tav' && str_contains($classJurusan, 'teknik audio video')) $isMatch = true;
+
+            if (!$isMatch) {
+                abort(403, 'Anda tidak memiliki akses ke kelas ini.');
+            }
+        }
+
         $request->validate([
             'file' => 'required|file|mimes:xlsx,csv',
         ]);

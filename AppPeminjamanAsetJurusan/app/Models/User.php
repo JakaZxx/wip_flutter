@@ -68,32 +68,15 @@ class User extends Authenticatable implements MustVerifyEmail
         if ($this->profile_picture) {
             $path = $this->profile_picture;
             
-            // If it's a full URL, return it
+            // If it's already a full URL (e.g. from socialite), return it as is
             if (filter_var($path, FILTER_VALIDATE_URL)) {
                 return $path;
             }
 
-            // Clean up common incorrect prefixes if they exist in DB
+            // Path cleaning: remove all variants of prefixes that might be in DB
             $path = str_replace(['public/', '/storage/', 'storage/', 'profiles/'], '', $path);
             $path = ltrim($path, '/');
-
-            // Check existence in storage link (profiles/ subdirectory)
-            if (file_exists(public_path('storage/profiles/' . $path))) {
-                return asset('storage/profiles/' . $path);
-            }
-            
-            // Link directly to storage/ (no profiles/)
-            if (file_exists(public_path('storage/' . $path))) {
-                return asset('storage/' . $path);
-            }
-            
-            // Check legacy path
-            if (file_exists(public_path('uploads/profile_pictures/' . $path))) {
-                return asset('uploads/profile_pictures/' . $path);
-            }
-            
-            // Fallback: use the custom storage route if nothing else works
-            return url('/public-storage/profiles/' . $path);
+            return asset('storage/profiles/' . $path);
         }
         return asset('uploads/profile_pictures/default.png');
     }

@@ -70,8 +70,15 @@ class AppNavigationDrawer extends StatelessWidget {
               width: 76, height: 76,
               decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
               child: ClipOval(
-                child: user?.profilePicture != null
-                    ? Image.network(ApiService.fixPhotoUrl(user!.profilePicture!)!, fit: BoxFit.cover)
+                child: user?.profilePicture != null || user?.profilePictureUrl != null
+                    ? Image.network(
+                        ApiService.fixPhotoUrl(user?.profilePictureUrl ?? user?.profilePicture)!, 
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Center(
+                          child: Text(user?.name.substring(0, 1).toUpperCase() ?? 'U', 
+                          style: GoogleFonts.outfit(color: AppTheme.primaryBlue, fontSize: 32, fontWeight: FontWeight.w900))
+                        ),
+                      )
                     : Center(child: Text(user?.name.substring(0, 1).toUpperCase() ?? 'U', style: GoogleFonts.outfit(color: AppTheme.primaryBlue, fontSize: 32, fontWeight: FontWeight.w900))),
               ),
             ),
@@ -88,7 +95,13 @@ class AppNavigationDrawer extends StatelessWidget {
               ),
               if (user?.jurusan != null) ...[
                 const SizedBox(width: 8),
-                Text(user!.jurusan, style: GoogleFonts.poppins(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w500)),
+                Expanded(
+                  child: Text(
+                    user!.jurusan, 
+                    style: GoogleFonts.poppins(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w500),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ],
           ),
@@ -195,4 +208,3 @@ class AppNavigationDrawer extends StatelessWidget {
     );
   }
 }
-

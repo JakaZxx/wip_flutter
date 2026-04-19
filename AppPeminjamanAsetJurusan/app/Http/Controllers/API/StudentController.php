@@ -60,13 +60,19 @@ class StudentController extends Controller
                     'pending_borrowings_count' => $pendingBorrowingsCount,
                     'approved_or_overdue_borrowings_count' => $approvedOrOverdueBorrowingsCount,
                     'total_available_assets' => $totalAvailableAssets,
+                    // Added missing keys to match DashboardStats.dart
+                    'total_assets' => DB::table('commodities')->count(),
+                    'returned_borrowings_count' => $student->borrowings()->where('status', 'returned')->count(),
+                    'rejected_borrowings_count' => $student->borrowings()->where('status', 'rejected')->count(),
+                    'upcoming_due_borrowing' => null,
                 ]
             ]);
         } catch (\Exception $e) {
-            Log::error('StudentController::dashboardStats error', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            Log::error('StudentController::dashboardStats error: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred while fetching dashboard stats'
+                'message' => 'An error occurred while fetching dashboard stats: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -255,6 +261,31 @@ class StudentController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while fetching borrowing details'
+            ], 500);
+        }
+    }
+
+    /**
+     * Menampilkan daftar semua siswa.
+     * GET /api/students
+     */
+    public function index()
+    {
+        Log::info('StudentController::index started');
+        try {
+            $students = Student::with(['user', 'schoolClass'])->get();
+            
+            Log::info('StudentController::index ended');
+            return response()->json([
+                'success' => true,
+                'message' => 'Data siswa berhasil diambil',
+                'data' => $students
+            ]);
+        } catch (\Exception $e) {
+            Log::error('StudentController::index error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while fetching students: ' . $e->getMessage()
             ], 500);
         }
     }

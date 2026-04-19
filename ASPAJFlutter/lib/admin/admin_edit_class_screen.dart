@@ -122,7 +122,7 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSectionHeader('CORE CONFIGURATION', 'Specify class identity and academic level'),
+                    _buildSectionHeader('KONFIGURASI UTAMA', 'Tentukan identitas kelas dan tingkat akademik'),
                     const SizedBox(height: 16),
                     _buildClassConfigCard(),
                     const SizedBox(height: 32),
@@ -168,7 +168,7 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
           ),
         ),
         title: Text(
-          isEditing ? 'MODIFY CLASS' : 'REGISTER CLASS',
+          isEditing ? 'MODIFIKASI KELAS' : 'DAFTARKAN KELAS',
           style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 18, color: Colors.white, letterSpacing: 2),
         ),
         centerTitle: true,
@@ -207,8 +207,8 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
         children: [
           _buildInputField(
             controller: _nameController,
-            label: 'CLASS IDENTITY NAME',
-            hint: 'e.g., XII RPL 1',
+            label: 'NAMA KELAS',
+            hint: 'Contoh: XII RPL 1',
             icon: Icons.badge_outlined,
             validator: (v) => v == null || v.isEmpty ? 'Nama kelas wajib diisi' : null,
           ),
@@ -217,19 +217,22 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
             children: [
               Expanded(
                 child: _buildDropdownField(
-                  label: 'ACADEMIC LEVEL',
+                  label: 'TINGKAT KELAS',
                   value: _selectedLevel,
-                  items: _levels.map((l) => DropdownMenuItem(value: l, child: Text(l))).toList(),
+                  items: _levels.map((l) => DropdownMenuItem(value: l, child: Text(l, style: const TextStyle(fontSize: 11)))).toList(),
                   onChanged: (v) => setState(() => _selectedLevel = v),
                   icon: Icons.layers_outlined,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: _buildDropdownField(
-                  label: 'PROG. STUDY',
+                  label: 'JURUSAN',
                   value: _selectedProgramStudy,
-                  items: _programStudies.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
+                  items: _programStudies.map((p) => DropdownMenuItem(
+                    value: p, 
+                    child: Text(p, style: const TextStyle(fontSize: 10), overflow: TextOverflow.ellipsis, maxLines: 1)
+                  )).toList(),
                   onChanged: (v) => setState(() => _selectedProgramStudy = v),
                   icon: Icons.auto_awesome_mosaic_outlined,
                 ),
@@ -239,8 +242,8 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
           const SizedBox(height: 20),
           _buildInputField(
             controller: _descriptionController,
-            label: 'STUDY LOGS / DESCRIPTION',
-            hint: 'Optional class metadata...',
+            label: 'STUDI DESKRIPSI',
+            hint: 'Metadata opsional kelas...',
             icon: Icons.notes_rounded,
             maxLines: 3,
           ),
@@ -292,10 +295,11 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
+          isExpanded: true,
           initialValue: value,
           items: items,
           onChanged: onChanged,
-          style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF1E293B)),
+          style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF1E293B)),
           decoration: AppTheme.premiumInputDecoration('', icon),
         ),
       ],
@@ -309,7 +313,7 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildSectionHeader('STUDENT ROSTER', '${_students.length} active students enrolled'),
+            _buildSectionHeader('DAFTAR SISWA', '${_students.length} siswa aktif terdaftar'),
             Row(
               children: [
                 _buildQuickAction(Icons.swap_horiz_rounded, AppTheme.primaryBlue, _moveStudents),
@@ -391,8 +395,8 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
         children: [
           const Icon(Icons.people_outline_rounded, size: 48, color: Color(0xFFCBD5E1)),
           const SizedBox(height: 16),
-          Text('No students found', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFF64748B))),
-          Text('This class currently has no enrollments.', textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF94A3B8))),
+          Text('Tidak ada siswa ditemukan', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFF64748B))),
+          Text('Kelas ini belum memiliki daftar siswa.', textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF94A3B8))),
         ],
       ),
     );
@@ -408,7 +412,7 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
               padding: const EdgeInsets.symmetric(vertical: 20),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
             ),
-            child: Text('DISCARD', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFF64748B))),
+            child: Text('BATAL', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFF64748B))),
           ),
         ),
         const SizedBox(width: 16),
@@ -432,7 +436,7 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
               ),
               child: _isSaving
                   ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : Text('COMMIT CHANGES', style: GoogleFonts.outfit(fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1.5)),
+                  : Text('SIMPAN PERUBAHAN', style: GoogleFonts.outfit(fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1.5)),
             ),
           ),
         ),
@@ -445,12 +449,12 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
     final availableClasses = classProvider.classes.where((c) => c.id != widget.classId && c.programStudy == _selectedProgramStudy).toList();
 
     if (availableClasses.isEmpty) {
-      _showError('No alternative classes found for migration.');
+      _showError('Tidak ditemukan kelas alternatif untuk migrasi.');
       return;
     }
 
     if (_students.isEmpty) {
-      _showError('Roster is empty. Nothing to migrate.');
+      _showError('Daftar siswa kosong. Tidak ada yang bisa dimigrasi.');
       return;
     }
 
@@ -458,7 +462,7 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('Target Destination', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        title: Text('Tujuan Migrasi', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView.separated(
@@ -479,14 +483,14 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
     );
 
     if (selectedClass != null) {
-      final confirm = await _showConfirmDialog('Confirm Migration', 'Are you sure you want to move ${_students.length} students to ${selectedClass.name}?');
+      final confirm = await _showConfirmDialog('Konfirmasi Migrasi', 'Apakah Anda yakin ingin memindahkan ${_students.length} siswa ke ${selectedClass.name}?');
       if (confirm == true) {
         final studentIds = _students.map((s) => s.id).toList();
         try {
           final success = await classProvider.moveStudents(widget.classId!, selectedClass.id, studentIds);
           if (success && mounted) {
             _loadStudents();
-            _showSuccess('Batch migration completed successfully.');
+            _showSuccess('Migrasi massal berhasil diselesaikan.');
           }
         } catch (e) {
           _showError(e.toString());
@@ -496,14 +500,14 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
   }
 
   Future<void> _deleteAllStudents() async {
-    final confirm = await _showConfirmDialog('Mass Removal', 'Proceed with deleting the entire student roster for this class? This cannot be undone.');
+    final confirm = await _showConfirmDialog('Penghapusan Massal', 'Lanjutkan menghapus seluruh daftar siswa untuk kelas ini? Tindakan ini tidak dapat dibatalkan.');
     if (confirm == true) {
       try {
         if (mounted) {
           final success = await context.read<ClassProvider>().deleteStudentsFromClass(widget.classId!);
           if (success && mounted) {
             await _loadStudents();
-            _showSuccess('Entire roster has been cleared.');
+            _showSuccess('Seluruh daftar siswa telah dikosongkan.');
           }
         }
       } catch (e) {
@@ -513,14 +517,14 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
   }
 
   Future<void> _removeStudent(Student student) async {
-    final confirm = await _showConfirmDialog('Remove Enrollment', 'Remove ${student.name} from the current class registry?');
+    final confirm = await _showConfirmDialog('Hapus Registrasi', 'Hapus ${student.name} dari daftar registrasi kelas saat ini?');
     if (confirm == true) {
       try {
         if (mounted) {
           await context.read<ClassProvider>().removeStudentFromClass(widget.classId!, student.id);
           if (mounted) {
             await _loadStudents();
-            _showSuccess('Student registry updated.');
+            _showSuccess('Registrasi siswa berhasil diperbarui.');
           }
         }
       } catch (e) {
@@ -547,7 +551,7 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
 
       if (success && mounted) {
         Navigator.pop(context);
-        _showSuccess('Database synchronized successfully.');
+        _showSuccess('Database berhasil disinkronisasi.');
       }
     } catch (e) {
       _showError(e.toString());
@@ -564,11 +568,11 @@ class _AdminEditClassScreenState extends State<AdminEditClassScreen> {
         title: Text(title, style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
         content: Text(message, style: GoogleFonts.poppins()),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('CANCEL', style: GoogleFonts.outfit(color: const Color(0xFF64748B)))),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('BATAL', style: GoogleFonts.outfit(color: const Color(0xFF64748B)))),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.dangerRed, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-            child: Text('PROCEED', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: Text('LANJUTKAN', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

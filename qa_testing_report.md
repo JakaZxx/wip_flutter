@@ -1,6 +1,6 @@
-# 🛡️ ASPAJ QA/Testing & Bug Fix Report
+# 🛡️ 4LLASET QA/Testing & Bug Fix Report
 
-This document summarizes the quality assurance activities, testing results, and critical bug fixes implemented during the development and stability refinement of the **ASPAJ (Aplikasi Peminjaman Aset Jurusan)** system.
+This document summarizes the quality assurance activities, testing results, and critical bug fixes implemented during the development and stability refinement of the **4LLASET (Aplikasi Peminjaman Aset Jurusan)** system.
 
 ---
 

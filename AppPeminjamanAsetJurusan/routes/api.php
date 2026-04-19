@@ -15,6 +15,7 @@ use App\Http\Controllers\API\OfficerDashboardController;
 use App\Http\Controllers\API\DashboardController;
 use Illuminate\Support\Facades\File;
 use App\Http\Controllers\API\UploadController;
+use App\Http\Controllers\API\BugReportController as APIBugReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,6 +44,10 @@ Route::get('/public-storage/{path}', function ($path) {
 // Auth routes
 Route::post('/login', [AuthController::class, 'login']);
 
+// Email Verification Routes
+Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verify'])->name('verification.verify');
+Route::post('/email/resend', [AuthController::class, 'resend'])->middleware(['auth:sanctum'])->name('verification.resend');
+
 Route::middleware('auth:sanctum')->group(function () {
     // Logout
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -65,6 +70,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/admin/dashboard-stats', [AdminDashboardController::class, 'dashboardStats']);
     });
 
+    // General student listing for all staff
+    Route::get('/students', [StudentController::class, 'index']);
+
     // Shared Management (Admin or Officer)
     // Note: If no staff middleware exists, we apply both separately or check in controllers.
     // Since we only have IsAdmin and IsOfficer, I will use a custom closure for Staff if needed,
@@ -84,10 +92,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/school-classes', [KelasController::class, 'store']);
     Route::put('/school-classes/{id}', [KelasController::class, 'update']);
     Route::delete('/school-classes/{id}', [KelasController::class, 'destroy']);
+    
+    // Additional school class student routes
+    Route::get('/school-classes/{id}/students', [KelasController::class, 'getClassStudents']);
+    Route::post('/school-classes/move-students', [KelasController::class, 'moveStudents']);
+    Route::delete('/school-classes/{id}/students', [KelasController::class, 'deleteStudentsFromClass']);
+    Route::delete('/school-classes/{classId}/students/{studentId}', [KelasController::class, 'removeStudentFromClass']);
 
     // Dashboard statistics (general)
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::get('/officer/dashboard-stats', [OfficerDashboardController::class, 'dashboardStats']);
+
+    // Bug Report
+    Route::post('/bug-report', [APIBugReportController::class, 'submitForm']);
 
     // Upload endpoint
     Route::post('/upload', [UploadController::class, 'upload']);

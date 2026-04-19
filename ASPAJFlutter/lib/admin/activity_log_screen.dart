@@ -60,7 +60,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => _buildLogItem(provider.borrowings[index]),
-                    itemCount: provider.borrowings.length,
+                    childCount: provider.borrowings.length,
                   ),
                 ),
               );
@@ -100,11 +100,11 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
   }
 
   Widget _buildLogItem(Borrowing activity) {
-    final dateStr = activity.borrowDate != null ? DateFormat('dd MMM yyyy').format(activity.borrowDate!) : 'Unknown';
+    final dateStr = DateFormat('dd MMM yyyy').format(activity.borrowDate);
     
     Color statusColor = Colors.orange;
     String statusText = 'PROSES';
-    IconData icon = FontAwesomeIcons.clock;
+    dynamic icon = FontAwesomeIcons.clock;
 
     if (activity.status == 'approved') {
       statusColor = const Color(0xFF3B82F6);
@@ -155,7 +155,12 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Text(activity.student?.name ?? 'Identitas Terenkripsi', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+                    Text(
+                      activity.student?.name ?? 'Identitas Terenkripsi', 
+                      style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     const SizedBox(height: 4),
                     Text(activity.tujuan ?? 'Peminjaman Inventaris', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF64748B)), maxLines: 2, overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 16),
@@ -163,8 +168,15 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                       children: [
                         FaIcon(icon, size: 12, color: statusColor),
                         const SizedBox(width: 8),
-                        Text(activity.status.toUpperCase(), style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w900, color: statusColor, letterSpacing: 1.5)),
-                        const Spacer(),
+                        Expanded(
+                          child: Text(
+                            activity.status.toUpperCase(), 
+                            style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w900, color: statusColor, letterSpacing: 1.5),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
                         Text('ID: #${activity.id.toString().padLeft(4, '0')}', style: GoogleFonts.outfit(fontSize: 10, color: const Color(0xFFCBD5E1), fontWeight: FontWeight.bold)),
                       ],
                     ),

@@ -30,7 +30,12 @@ class UserController extends Controller
                 ], 401);
             }
 
-            $user->load('student.schoolClass');
+            // Polymorphic loading based on model type
+            if ($user instanceof \App\Models\User) {
+                $user->load('student.schoolClass');
+            } else if ($user instanceof \App\Models\Student) {
+                $user->load('schoolClass');
+            }
 
             Log::info('UserController::profile ended successfully');
             return response()->json([
@@ -94,7 +99,7 @@ class UserController extends Controller
                 $path = $file->storeAs('profiles', $filename, 'public');
                 Log::info('UserController::updateProfile file stored', ['path' => $path, 'filename' => $filename]);
 
-                $user->profile_picture = $filename;
+                $user->profile_picture = 'profiles/' . $filename;
                 $user->save();
             }
 
@@ -271,7 +276,7 @@ class UserController extends Controller
                 $filename = time() . '_' . $file->getClientOriginalName();
                 $file->storeAs('profiles', $filename, 'public');
 
-                $data['profile_picture'] = $filename;
+                $data['profile_picture'] = 'profiles/' . $filename;
             }
 
             $user->update($data);

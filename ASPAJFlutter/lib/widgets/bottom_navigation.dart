@@ -28,16 +28,17 @@ class AppBottomNavigation extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(35)),
       ),
       child: SafeArea(
+        top: false,
         child: Container(
-          height: 85,
+          height: 72, // Reduced from 85 to be more compact
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(0, FontAwesomeIcons.house, 'Home'),
-              _buildNavItem(1, FontAwesomeIcons.boxesStacked, 'Assets'),
-              _buildNavItem(2, FontAwesomeIcons.clockRotateLeft, 'Sync'),
-              _buildNavItem(3, FontAwesomeIcons.solidCircleUser, 'Identity'),
+              _buildNavItem(0, FontAwesomeIcons.house, 'Beranda'),
+              _buildNavItem(1, FontAwesomeIcons.boxesStacked, 'Aset'),
+              _buildNavItem(2, FontAwesomeIcons.clockRotateLeft, 'Riwayat'),
+              _buildNavItem(3, FontAwesomeIcons.solidCircleUser, 'Profil'),
             ],
           ),
         ),
@@ -57,7 +58,7 @@ class AppBottomNavigation extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 400),
           curve: Curves.fastOutSlowIn,
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 4),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -70,7 +71,7 @@ class AppBottomNavigation extends StatelessWidget {
                   size: 18,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               Text(
                 label.toUpperCase(),
                 style: GoogleFonts.outfit(
@@ -80,7 +81,7 @@ class AppBottomNavigation extends StatelessWidget {
                   letterSpacing: 1.2,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 width: isSelected ? 4 : 0,

@@ -14,6 +14,7 @@ import 'officer/borrowing_status_screen.dart';
 import 'student/borrowing_create_screen.dart';
 import 'officer/return_screen.dart';
 import 'screens/profile_screen.dart';
+import 'admin/admin_users_screen.dart';
 import 'admin/admin_classes_screen.dart';
 import 'admin/activity_log_screen.dart';
 import 'student/checkout_screen.dart';
@@ -23,8 +24,11 @@ import 'widgets/bottom_navigation.dart';
 import 'theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'services/audit_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AuditService.initialize();
   runApp(const MyApp());
 }
 
@@ -44,7 +48,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ClassProvider()),
       ],
       child: MaterialApp(
-        title: '4llAset',
+        title: '4LLASET',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         darkTheme: ThemeData.dark().copyWith(
@@ -115,7 +119,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
                     child: const FaIcon(FontAwesomeIcons.shieldHalved, color: Colors.white, size: 48),
                   ),
                   const SizedBox(height: 32),
-                  Text('4LL ASET', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 24, letterSpacing: 4)),
+                  Text('4LLASET', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 24, letterSpacing: 4)),
                   const SizedBox(height: 8),
                   Text('Mengamankan Infrastruktur...', style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12, letterSpacing: 1)),
                   const SizedBox(height: 48),
@@ -189,7 +193,9 @@ class _MainScreenState extends State<MainScreen> {
                 child: InkWell(
                   onTap: () => Navigator.of(context).pushNamed('/borrowing-create'),
                   borderRadius: BorderRadius.circular(20),
-                  child: const FaIcon(FontAwesomeIcons.plus, color: Colors.white, size: 24),
+                  child: const Center(
+                    child: FaIcon(FontAwesomeIcons.plus, color: Colors.white, size: 24),
+                  ),
                 ),
               ),
             )

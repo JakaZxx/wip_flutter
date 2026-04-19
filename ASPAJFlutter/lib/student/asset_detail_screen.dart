@@ -37,7 +37,7 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _showError('Connection failed: $e');
+        _showError('Gagal memuat detail aset: $e');
       }
     }
   }
@@ -126,7 +126,14 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
           fit: StackFit.expand,
           children: [
             _commodity.fixedPhotoUrl != null
-                ? Image.network(_commodity.fixedPhotoUrl!, fit: BoxFit.cover)
+                ? Image.network(
+                    _commodity.fixedPhotoUrl!, 
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
+                      child: const Center(child: Opacity(opacity: 0.2, child: FaIcon(FontAwesomeIcons.circleExclamation, size: 80, color: Colors.white))),
+                    ),
+                  )
                 : Container(
                     decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
                     child: const Center(child: Opacity(opacity: 0.2, child: FaIcon(FontAwesomeIcons.toolbox, size: 120, color: Colors.white))),
@@ -153,7 +160,7 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(color: AppTheme.primaryBlue, borderRadius: BorderRadius.circular(10)),
-                    child: Text(_commodity.code ?? 'CODE: N/A', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 10, color: Colors.white, letterSpacing: 1)),
+                    child: Text(_commodity.code ?? 'KODE: TANPA KODE', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 10, color: Colors.white, letterSpacing: 1)),
                   ),
                   const SizedBox(height: 8),
                   SizedBox(
@@ -289,8 +296,9 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildSystemTimestamp('TERDAFTAR', _commodity.createdAt),
-          _buildSystemTimestamp('SYNC TERAKHIR', _commodity.updatedAt),
+          Expanded(child: _buildSystemTimestamp('TERDAFTAR', _commodity.createdAt)),
+          const SizedBox(width: 12),
+          Expanded(child: _buildSystemTimestamp('SYNC TERAKHIR', _commodity.updatedAt)),
         ],
       ),
     );
@@ -414,7 +422,7 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
                    Padding(padding: const EdgeInsets.symmetric(horizontal: 24), child: Text('$quantity', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold))),
                    _buildQtyBtn(Icons.add, () => quantity < _commodity.stock ? setModalState(() => quantity++) : null),
                    const Spacer(),
-                   Text('MAX: ${_commodity.stock}', style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue)),
+                   Text('MAKS: ${_commodity.stock}', style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue)),
                 ],
               ),
               const SizedBox(height: 32),
@@ -495,7 +503,7 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
           controller: c,
           style: GoogleFonts.poppins(fontSize: 14),
           decoration: InputDecoration(
-            hintText: 'Permintaan khusus (opsional)...',
+            hintText: 'Contoh: Untuk keperluan praktik (opsional)...',
             filled: true,
             fillColor: const Color(0xFFF1F5F9),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),

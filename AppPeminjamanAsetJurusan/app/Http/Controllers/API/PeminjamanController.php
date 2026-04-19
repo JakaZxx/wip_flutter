@@ -26,11 +26,12 @@ class PeminjamanController extends Controller
                     ->orderBy('created_at', 'desc')
                     ->get();
             } elseif ($user->isOfficer()) {
+                $userJurusan = strtolower($user->jurusan ?? '');
                 $query = Borrowing::with('student.user', 'student.schoolClass', 'items.commodity')
-                    ->whereHas('items.commodity', function($q) use ($user) {
-                        $q->where('jurusan', $user->jurusan)
+                    ->whereHas('items.commodity', function($q) use ($userJurusan) {
+                        $q->whereRaw('LOWER(TRIM(jurusan)) = ?', [$userJurusan])
                           ->orWhereNull('jurusan')
-                          ->orWhere('jurusan', 'Semua');
+                          ->orWhereRaw('LOWER(TRIM(jurusan)) = ?', ['semua']);
                     });
                 $borrowings = $query->orderBy('created_at', 'desc')->get();
             } else {
@@ -69,12 +70,13 @@ class PeminjamanController extends Controller
                     ->orderBy('created_at', 'desc')
                     ->get();
             } elseif ($user->isOfficer()) {
+                $userJurusan = strtolower($user->jurusan ?? '');
                 $borrowings = Borrowing::with('student.user', 'student.schoolClass', 'items.commodity')
                     ->where('status', 'pending')
-                    ->whereHas('items.commodity', function($q) use ($user) {
-                        $q->where('jurusan', $user->jurusan)
+                    ->whereHas('items.commodity', function($q) use ($userJurusan) {
+                        $q->whereRaw('LOWER(TRIM(jurusan)) = ?', [$userJurusan])
                           ->orWhereNull('jurusan')
-                          ->orWhere('jurusan', 'Semua');
+                          ->orWhereRaw('LOWER(TRIM(jurusan)) = ?', ['semua']);
                     })
                     ->orderBy('created_at', 'desc')
                     ->get();
@@ -775,7 +777,7 @@ class PeminjamanController extends Controller
         } elseif ($returned > 0) {
             $borrowing->status = 'partially_returned';
         } elseif ($approved + $returned + $rejected === $total && $approved > 0) {
-            $borrowing->status = 'approved';
+            $borrowing->status = ($rejected > 0) ? 'partially_approved' : 'approved';
         } elseif ($approved > 0) {
             $borrowing->status = 'partially_approved';
         } elseif ($pending > 0) {

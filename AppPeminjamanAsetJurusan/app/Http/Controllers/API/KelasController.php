@@ -175,4 +175,102 @@ class KelasController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Mengambil daftar siswa dalam kelas tertentu.
+     * GET /api/school-classes/{id}/students
+     */
+    public function getClassStudents($id)
+    {
+        try {
+            $class = SchoolClass::find($id);
+            if (!$class) {
+                return response()->json(['success' => false, 'message' => 'Kelas tidak ditemukan'], 404);
+            }
+
+            $students = $class->students()->with('user')->get();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data siswa kelas berhasil diambil',
+                'data' => $students
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Memindahkan siswa ke kelas lain.
+     * POST /api/school-classes/move-students
+     */
+    public function moveStudents(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'to_class_id' => 'required|exists:school_classes,id',
+            'student_ids' => 'required|array',
+            'student_ids.*' => 'exists:students,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 400);
+        }
+
+        try {
+            \App\Models\Student::whereIn('id', $request->student_ids)
+                ->update(['school_class_id' => $request->to_class_id]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Siswa berhasil dipindahkan'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Menghapus semua siswa dari kelas tertentu (unassign them).
+     * DELETE /api/school-classes/{id}/students
+     */
+    public function deleteStudentsFromClass($id)
+    {
+        try {
+            \App\Models\Student::where('school_class_id', $id)
+                ->update(['school_class_id' => null]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Semua siswa berhasil dihapus dari kelas'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Menghapus satu siswa dari kelas tertentu (unassign them).
+     * DELETE /api/school-classes/{classId}/students/{studentId}
+     */
+    public function removeStudentFromClass($classId, $studentId)
+    {
+        try {
+            $student = \App\Models\Student::where('id', $studentId)
+                ->where('school_class_id', $classId)
+                ->first();
+
+            if (!$student) {
+                return response()->json(['success' => false, 'message' => 'Siswa tidak ditemukan di kelas ini'], 404);
+            }
+
+            $student->update(['school_class_id' => null]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Siswa berhasil dihapus dari kelas'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
 }

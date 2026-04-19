@@ -359,6 +359,7 @@ class BorrowingProvider with ChangeNotifier {
     int quantity, {
     String? condition,
     String? description,
+    dynamic commodity, // Can be Commodity or null
   }) async {
     debugPrint(
       'BorrowingProvider.addToCart: Adding to cart commodityId: $commodityId, quantity: $quantity',
@@ -386,7 +387,6 @@ class BorrowingProvider with ChangeNotifier {
           commodity: existing.commodity,
         );
       } else {
-        // create a temporary BorrowingItem-like object — best effort: loadCart will correct it
         final temp = BorrowingItem(
           id: -1,
           borrowingId: null,
@@ -400,8 +400,9 @@ class BorrowingProvider with ChangeNotifier {
           photoPath: null,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
-          commodityName: null,
-          commodity: null,
+          commodityName: (commodity as dynamic)?.name,
+          commodity: (commodity as dynamic),
+          itemPhotoUrl: (commodity as dynamic)?.photoUrl,
         );
         _cartItems.add(temp);
       }

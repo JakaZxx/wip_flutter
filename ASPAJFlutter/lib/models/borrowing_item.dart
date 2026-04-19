@@ -85,10 +85,18 @@ class BorrowingItem {
   String get displayName => commodityName ?? 'Item $commodityId';
   String? get photoUrl => itemPhotoUrl ?? commodity?.photoUrl ?? photoPath;
   String? get fixedPhotoUrl {
+    // If we have a commodity object, use its fixedPhotoUrl as primary source
+    // because it handles its own internal photoUrl correctly.
+    if (commodity != null && commodity!.photoUrl != null) {
+      return commodity!.fixedPhotoUrl;
+    }
+    
+    // Fallback to local properties
     if (photoUrl != null) {
       return ApiService.fixPhotoUrl(photoUrl);
     }
-    return commodity?.fixedPhotoUrl;
+    
+    return null;
   }
 
   BorrowingItem copyWith({

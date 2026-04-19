@@ -629,8 +629,8 @@
                 <ul class="items-list">
                     @foreach($borrowing->items as $item)
                         <li>
-                            @if($item->commodity->photo)
-                                <img src="{{ $item->commodity->photo }}" alt="{{ $item->commodity->name }}">
+                            @if($item->commodity->photo_url)
+                                <img src="{{ $item->commodity->photo_url }}" alt="{{ $item->commodity->name }}">
                             @else
                                 <i class="fas fa-box"></i>
                             @endif

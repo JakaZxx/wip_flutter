@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../providers/commodity_provider.dart';
+import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 
@@ -28,11 +29,13 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
   final _sumberController = TextEditingController();
   final _tahunController = TextEditingController();
   final _deskripsiController = TextEditingController();
+  late AuthProvider _authProvider;
 
   final ImagePicker _picker = ImagePicker();
   XFile? _pickedImage;
   Uint8List? _pickedImageBytes; // store bytes for preview & web
   bool _removePhoto = false; // when user wants to remove existing photo
+  bool _isOfficer = false;
 
   String? _selectedJurusan;
   bool _isLoading = false;
@@ -40,11 +43,44 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
   final List<String> _jurusanOptions = [
     'Rekayasa Perangkat Lunak',
     'Desain Komunikasi Visual',
+    'Teknik Komputer Jaringan',
     'Teknik Otomasi Industri',
     'Teknik Instalasi Tenaga Listrik',
-    'Teknik Audio Video',
-    'Teknik Komputer Jaringan',
+    'Teknik Audio Video'
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _authProvider = context.read<AuthProvider>();
+    final user = _authProvider.user;
+    if (user != null && user.role == 'officers') {
+      _isOfficer = true;
+      // Pre-select and find matching option
+      String userJurusanLower = (user.jurusan ?? '').toLowerCase();
+      // Mapping from short/slang to long names in options
+      if (userJurusanLower == 'rpl') {
+        userJurusanLower = 'rekayasa perangkat lunak';
+      } else if (userJurusanLower == 'dkv') {
+        userJurusanLower = 'desain komunikasi visual';
+      } else if (userJurusanLower == 'toi') {
+        userJurusanLower = 'teknik otomasi industri';
+      } else if (userJurusanLower == 'titl') {
+        userJurusanLower = 'teknik instalasi tenaga listrik';
+      } else if (userJurusanLower == 'tav') {
+        userJurusanLower = 'teknik audio video';
+      } else if (userJurusanLower == 'tkj') {
+        userJurusanLower = 'teknik komputer jaringan';
+      }
+
+      for (var option in _jurusanOptions) {
+        if (option.toLowerCase() == userJurusanLower) {
+          _selectedJurusan = option;
+          break;
+        }
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -145,7 +181,9 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                     const SizedBox(height: 16),
                     _buildPremiumTextField(_stockController, 'Jumlah Stok', Icons.format_list_numbered_rounded, keyboardType: TextInputType.number),
                     const SizedBox(height: 16),
-                    _buildPremiumDropdown(_selectedJurusan, 'Jurusan / Departemen', _jurusanOptions, (v) => setState(() => _selectedJurusan = v)),
+                    _isOfficer
+                        ? _buildLockedJurusanField(_selectedJurusan ?? 'Unknown')
+                        : _buildPremiumDropdown(_selectedJurusan, 'Jurusan / Departemen', _jurusanOptions, (v) => setState(() => _selectedJurusan = v)),
                     const SizedBox(height: 32),
                     _buildSectionHeader('DETAIL & LOKASI'),
                     const SizedBox(height: 16),
@@ -222,20 +260,26 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildSmallIconButton(Icons.photo_library_outlined, 'Galeri', () async {
-                final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-                if (image != null) _setPickedImage(image);
-              }),
-              const SizedBox(width: 12),
-              _buildSmallIconButton(Icons.camera_alt_outlined, 'Kamera', () async {
-                final XFile? image = await _picker.pickImage(source: ImageSource.camera, imageQuality: 80);
-                if (image != null) _setPickedImage(image);
-              }),
+              Expanded(
+                child: _buildSmallIconButton(Icons.photo_library_outlined, 'Galeri', () async {
+                  final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+                  if (image != null) _setPickedImage(image);
+                }),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildSmallIconButton(Icons.camera_alt_outlined, 'Kamera', () async {
+                  final XFile? image = await _picker.pickImage(source: ImageSource.camera, imageQuality: 80);
+                  if (image != null) _setPickedImage(image);
+                }),
+              ),
               if (_pickedImageBytes != null) ...[
-                const SizedBox(width: 12),
-                _buildSmallIconButton(Icons.delete_outline_rounded, 'Hapus', () {
-                  setState(() { _pickedImage = null; _pickedImageBytes = null; _removePhoto = true; });
-                }, color: Colors.red),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildSmallIconButton(Icons.delete_outline_rounded, 'Hapus', () {
+                    setState(() { _pickedImage = null; _pickedImageBytes = null; _removePhoto = true; });
+                  }, color: Colors.red),
+                ),
               ],
             ],
           ),
@@ -299,7 +343,7 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF64748B))),
+        Text(label, style: GoogleFonts.outfit(fontSize: 9, fontWeight: FontWeight.w900, color: const Color(0xFF94A3B8), letterSpacing: 1)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -308,10 +352,32 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
             child: DropdownButton<String>(
               value: value,
               isExpanded: true,
-              hint: Text('Pilih Opsi', style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey)),
-              items: options.map((o) => DropdownMenuItem(value: o, child: Text(o, style: GoogleFonts.poppins(fontSize: 14)))).toList(),
+              hint: Text('Pilih Jurusan', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
+              items: options.map((o) => DropdownMenuItem(value: o, child: Text(o, style: GoogleFonts.poppins(fontSize: 11), overflow: TextOverflow.ellipsis))).toList(),
               onChanged: onChanged,
             ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLockedJurusanField(String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Jurusan / Departemen', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF64748B))),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(16)),
+          child: Row(
+            children: [
+              const Icon(Icons.lock_outline_rounded, size: 20, color: Color(0xFF94A3B8)),
+              const SizedBox(width: 12),
+              Text(value, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: const Color(0xFF64748B))),
+            ],
           ),
         ),
       ],

@@ -70,7 +70,7 @@
             <a href="{{ $url }}" class="button">Verify Email</a>
         </div>
         <div class="footer">
-            <p>&copy; 2023 SMKN 4 Bandung. All rights reserved.</p>
+            <p>&copy; 2026 SMKN 4 Bandung. All rights reserved.</p>
         </div>
     </div>
 </body>

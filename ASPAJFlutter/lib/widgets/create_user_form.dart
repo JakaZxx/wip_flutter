@@ -37,10 +37,10 @@ class _CreateUserFormState extends State<CreateUserForm> {
   final List<String> _jurusanOptions = [
     'Rekayasa Perangkat Lunak',
     'Desain Komunikasi Visual',
-    'Teknik Audio Video',
     'Teknik Komputer Jaringan',
-    'Teknik Instalasi Tenaga Listrik',
     'Teknik Otomasi Industri',
+    'Teknik Instalasi Tenaga Listrik',
+    'Teknik Audio Video',
   ];
 
   @override
@@ -310,6 +310,7 @@ class _CreateUserFormState extends State<CreateUserForm> {
 
   Widget _buildRoleDropdown() {
     return DropdownButtonFormField<String>(
+      key: ValueKey('role_$_selectedRole'),
       initialValue: _selectedRole,
       style: GoogleFonts.poppins(
         fontSize: 14,
@@ -330,6 +331,7 @@ class _CreateUserFormState extends State<CreateUserForm> {
   Widget _buildDynamicFields() {
     if (_selectedRole == 'officers') {
       return DropdownButtonFormField<String>(
+        key: ValueKey('jurusan_$_selectedJurusan'),
         initialValue: _selectedJurusan,
         style: GoogleFonts.poppins(
           fontSize: 14,
@@ -348,7 +350,8 @@ class _CreateUserFormState extends State<CreateUserForm> {
         builder: (context, cp, _) {
           if (cp.isLoading) return const Center(child: CircularProgressIndicator());
           return DropdownButtonFormField<int>(
-            initialValue: _selectedClassId,
+            key: ValueKey('class_$_selectedClassId'),
+            initialValue: (cp.classes.any((c) => c.id == _selectedClassId)) ? _selectedClassId : null,
             style: GoogleFonts.poppins(
               fontSize: 14,
               fontWeight: FontWeight.w600,

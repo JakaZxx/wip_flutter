@@ -163,7 +163,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         ),
         const SizedBox(height: 24),
         Text(
-          'ASPAJ',
+          '4LLASET',
           style: GoogleFonts.outfit(
             fontSize: 48,
             fontWeight: FontWeight.w900,
@@ -208,21 +208,23 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Sign In',
+              'Masuk',
               style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
             _buildInputField(
               controller: _emailController,
-              label: 'EMAIL OR NIS',
+              label: 'EMAIL ATAU NIS',
+              hint: 'Masukkan email atau NIS Anda',
               icon: Icons.alternate_email_rounded,
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 24),
             _buildInputField(
               controller: _passwordController,
-              label: 'PASSWORD',
+              label: 'KATA SANDI',
+              hint: 'Masukkan kata sandi Anda',
               icon: Icons.lock_outline_rounded,
               isPassword: true,
             ),
@@ -232,7 +234,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             TextButton(
               onPressed: () {},
               child: Text(
-                'Forgot your password?',
+                'Lupa kata sandi?',
                 style: GoogleFonts.outfit(color: const Color(0xFF64748B), fontWeight: FontWeight.bold, fontSize: 13),
               ),
             ),
@@ -245,6 +247,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   Widget _buildInputField({
     required TextEditingController controller,
     required String label,
+    required String hint,
     required IconData icon,
     bool isPassword = false,
     TextInputType? keyboardType,
@@ -277,10 +280,10 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             fillColor: const Color(0xFFF8FAFC),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: BorderSide.none),
             contentPadding: const EdgeInsets.symmetric(vertical: 20),
-            hintText: 'Enter your ${label.toLowerCase()}',
+            hintText: hint,
             hintStyle: GoogleFonts.poppins(color: const Color(0xFFCBD5E1), fontSize: 14),
           ),
-          validator: (v) => v == null || v.isEmpty ? 'This field is required' : null,
+          validator: (v) => v == null || v.isEmpty ? 'Kolom ini wajib diisi' : null,
         ),
       ],
     );
@@ -306,7 +309,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         child: authProvider.isLoading
             ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
             : Text(
-                'AUTHENTICATE',
+                'MASUK',
                 style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 2.0),
               ),
       ),
@@ -317,17 +320,15 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     return Column(
       children: [
         Text(
-          '© 2024 ASPAJ SYSTEM',
+          '© 2026 SISTEM 4LLASET',
           style: GoogleFonts.outfit(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.0),
         ),
         const SizedBox(height: 4),
         Text(
-          'SMKN 4 Bandung • Premium Edition',
+          'SMKN 4 Bandung • Edisi Premium',
           style: GoogleFonts.poppins(color: Colors.white.withValues(alpha: 0.3), fontSize: 10),
         ),
       ],
     );
   }
 }
-
-

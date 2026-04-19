@@ -4,52 +4,29 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Notifications\Notifiable;
 
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Laravel\Sanctum\HasApiTokens;
-
-class Student extends Authenticatable
+class Student extends Model
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory;
 
     protected $appends = ['profile_picture_url', 'role'];
 
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'last_seen_notifications' => 'datetime',
-    ];
-
     protected $fillable = [
-        'name', 'email', 'password', 'role', 'jurusan', 'nis', 
-        'approval_status', 'profile_picture', 'school_class_id', 'user_id'
+        'name', 'school_class_id', 'user_id'
     ];
 
     /**
      * Get full URL for profile picture or default image
+     * Note: In unified logic, profile_picture usually comes from the User model,
+     * but we keep this for compatibility if it's accessed via Student.
      */
     public function getProfilePictureUrlAttribute()
     {
-        if ($this->profile_picture) {
-            $path = $this->profile_picture;
-            if (filter_var($path, FILTER_VALIDATE_URL)) return $path;
-            
-            $path = str_replace(['public/', '/storage/', 'storage/', 'profiles/'], '', $path);
-            $path = ltrim($path, '/');
-
-            if (file_exists(public_path('storage/profiles/' . $path))) {
-                return asset('storage/profiles/' . $path);
-            }
-            if (file_exists(public_path('storage/' . $path))) {
-                return asset('storage/' . $path);
-            }
-            return url('/public-storage/profiles/' . $path);
+        // Try to get from linked user if available
+        if ($this->user && $this->user->profile_picture) {
+            return $this->user->profile_picture_url;
         }
+        
         return asset('uploads/profile_pictures/default.png');
     }
 
@@ -70,8 +47,16 @@ class Student extends Authenticatable
     public function isStudent(): bool { return true; }
     public function isAdmin(): bool { return false; }
     public function isOfficer(): bool { return false; }
-    public function isApproved(): bool { return $this->approval_status === 'approved'; }
-    public function isPending(): bool { return $this->approval_status === 'pending'; }
+    
+    public function isApproved(): bool 
+    { 
+        return $this->user ? $this->user->approval_status === 'approved' : false; 
+    }
+    
+    public function isPending(): bool 
+    { 
+        return $this->user ? $this->user->approval_status === 'pending' : false; 
+    }
 
     // Accessor for role
     public function getRoleAttribute()
@@ -79,21 +64,9 @@ class Student extends Authenticatable
         return 'students';
     }
 
-    // Relasi ke tabel program_studies (sudah dihapus)
-    // public function programStudy()
-    // {
-    //     return $this->belongsTo(ProgramStudy::class, 'program_id');
-    // }
-
     // Relasi ke user
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    // Relasi ke borrowings
-    public function borrowings()
-    {
-        return $this->hasMany(Borrowing::class);
     }
 }

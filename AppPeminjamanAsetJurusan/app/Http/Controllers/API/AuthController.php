@@ -38,38 +38,26 @@ class AuthController extends Controller
 
             $credentials = $request->only('email', 'password');
 
-            // 1. Try to find in User table (Admin/Officer)
+            // Find in User table (Unified: Admin/Officer/Student)
             $user = \App\Models\User::where('email', $credentials['email'])
+                ->orWhere('nis', $credentials['email']) // Support login by NIS for students in users table
                 ->first();
 
             if ($user && \Illuminate\Support\Facades\Hash::check($credentials['password'], $user->password)) {
                 Log::info('AuthController::login: User found and password correct', ['user_id' => $user->id, 'role' => $user->role]);
+                
+                // Load additional data for students or officers
+                if ($user->role === 'students') {
+                    $user->load('student.schoolClass');
+                } else {
+                    $user->load('student.schoolClass'); // Consistent loading
+                }
+
                 $token = $user->createToken('API Token')->plainTextToken;
                 return response()->json([
                     'success' => true,
                     'message' => 'Login successful',
                     'data' => $user,
-                    'token' => $token
-                ]);
-            }
-
-            // 2. Try to find in Student table (Siswa) - search by email or nis
-            $student = \App\Models\Student::where('email', $credentials['email'])
-                ->orWhere('nis', $credentials['email'])
-                ->first();
-
-            if ($student && \Illuminate\Support\Facades\Hash::check($credentials['password'], $student->password)) {
-                Log::info('AuthController::login: Student found and password correct', ['student_id' => $student->id]);
-                $student->load('schoolClass');
-                $token = $student->createToken('API Token')->plainTextToken;
-                
-                // Add role for frontend compatibility if needed
-                $student->role = 'students';
-                
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Login successful',
-                    'data' => $student,
                     'token' => $token
                 ]);
             }
@@ -114,5 +102,62 @@ class AuthController extends Controller
                 'message' => 'An error occurred during logout'
             ], 500);
         }
+    }
+
+    /**
+     * Handle email verification
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function verify(Request $request)
+    {
+        $user = \App\Models\User::findOrFail($request->id);
+
+        if (! hash_equals((string) $request->hash, sha1($user->getEmailForVerification()))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid verification link'
+            ], 403);
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Email already verified'
+            ]);
+        }
+
+        if ($user->markEmailAsVerified()) {
+            event(new \Illuminate\Auth\Events\Verified($user));
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Email verified successfully'
+        ]);
+    }
+
+    /**
+     * Resend verification email
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function resend(Request $request)
+    {
+        if ($request->user()->hasVerifiedEmail()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Email already verified'
+            ], 400);
+        }
+
+        $request->user()->sendEmailVerificationNotification();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Verification link sent'
+        ]);
     }
 }

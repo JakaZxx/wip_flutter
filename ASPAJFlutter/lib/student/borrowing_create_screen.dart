@@ -125,10 +125,7 @@ class _BorrowingCreateScreenState extends State<BorrowingCreateScreen> {
           ),
         ),
         centerTitle: true,
-        title: Text(
-          'BORROW REQUEST',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 18, color: Colors.white, letterSpacing: 2),
-        ),
+        title: Text('TAMBAH PINJAMAN', style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 18, color: Colors.white, letterSpacing: 2)),
       ),
     );
   }
@@ -265,7 +262,7 @@ class _BorrowingCreateScreenState extends State<BorrowingCreateScreen> {
         child: provider.isLoading
             ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
             : Text(
-                'SUBMIT REQUEST',
+                'KIRIM PENGAJUAN',
                 style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 2.0),
               ),
       ),
@@ -469,8 +466,19 @@ class CartItemCardPremium extends StatelessWidget {
             Container(
               width: 64,
               height: 64,
-              decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(16)),
-              child: const Center(child: FaIcon(FontAwesomeIcons.toolbox, color: AppTheme.primaryBlue, size: 24)),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16),
+                image: item.fixedPhotoUrl != null
+                    ? DecorationImage(
+                        image: NetworkImage(item.fixedPhotoUrl!),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: item.fixedPhotoUrl == null
+                  ? const Center(child: FaIcon(FontAwesomeIcons.toolbox, color: AppTheme.primaryBlue, size: 24))
+                  : null,
             ),
             const SizedBox(width: 16),
             Expanded(

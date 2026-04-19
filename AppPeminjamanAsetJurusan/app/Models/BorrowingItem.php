@@ -41,7 +41,13 @@ class BorrowingItem extends Model
     public function getReturnPhotoUrlAttribute()
     {
         if ($this->return_photo) {
-            return asset('storage/' . $this->return_photo);
+            $path = $this->return_photo;
+            // Clean up common incorrect prefixes if they exist in DB
+            $path = str_replace(['public/', '/storage/', 'storage/'], '', $path);
+            $path = ltrim($path, '/');
+            
+            // Use standard storage path for Laravel web views
+            return asset('storage/' . $path);
         }
         return null;
     }

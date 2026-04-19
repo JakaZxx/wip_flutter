@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 
 // Helper function to safely parse dynamic values to int.
 int? _parseInt(dynamic value) {
@@ -37,6 +38,7 @@ class RecentRequest {
   final int id;
   final String studentName;
   final String? status;
+  final String? profilePictureUrl;
   final DateTime? createdAt;
   final List<String> items;
 
@@ -44,6 +46,7 @@ class RecentRequest {
     required this.id,
     required this.studentName,
     this.status,
+    this.profilePictureUrl,
     this.createdAt,
     required this.items,
   });
@@ -59,6 +62,7 @@ class RecentRequest {
       id: json['id'] ?? 0,
       studentName: json['student']?['user']?['name'] ?? json['student_name'] ?? 'Unknown',
       status: json['status'],
+      profilePictureUrl: json['student']?['user']?['profile_picture_url'] ?? json['profile_picture_url'],
       createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
       items: itemsList,
     );
@@ -70,6 +74,7 @@ class RecentUser {
   final String name;
   final String email;
   final String role;
+  final String? profilePictureUrl;
   final DateTime? createdAt;
 
   RecentUser({
@@ -77,6 +82,7 @@ class RecentUser {
     required this.name,
     required this.email,
     required this.role,
+    this.profilePictureUrl,
     this.createdAt,
   });
 
@@ -86,6 +92,7 @@ class RecentUser {
       name: json['name'] ?? 'Unknown',
       email: json['email'] ?? '',
       role: json['role'] ?? '',
+      profilePictureUrl: json['profile_picture_url'],
       createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
     );
   }
@@ -135,37 +142,45 @@ class DashboardStats {
   });
 
   factory DashboardStats.fromJson(Map<String, dynamic> json) {
-    return DashboardStats(
-      // Common
-      totalAssets: _parseInt(json['total_assets']),
+    try {
+      return DashboardStats(
+        // Common
+        totalAssets: _parseInt(json['total_assets']),
 
-      // Admin
-      totalUsers: _parseInt(json['total_users']),
-      pendingUsersCount: _parseInt(json['pending_users_count']),
-      totalBorrowings: _parseInt(json['total_borrowings']),
-      userGrowth: json['user_growth'] != null ? ChartData.fromJson(json['user_growth']) : null,
-      assetDistribution: json['asset_distribution'] as Map<String, dynamic>?,
-      assetStatus: json['asset_status'] as Map<String, dynamic>?,
-      recentUsers: (json['recent_users'] as List<dynamic>?)
-          ?.map((e) => RecentUser.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      recentBorrowings: (json['recent_borrowings'] as List<dynamic>?)
-          ?.map((e) => RecentRequest.fromJson(e as Map<String, dynamic>))
-          .toList(),
+        // Admin
+        totalUsers: _parseInt(json['total_users']),
+        pendingUsersCount: _parseInt(json['pending_users_count']),
+        totalBorrowings: _parseInt(json['total_borrowings']),
+        userGrowth: json['user_growth'] != null ? ChartData.fromJson(json['user_growth']) : null,
+        assetDistribution: json['asset_distribution'] as Map<String, dynamic>?,
+        assetStatus: json['asset_status'] as Map<String, dynamic>?,
+        recentUsers: (json['recent_users'] as List<dynamic>?)
+            ?.map((e) => RecentUser.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        recentBorrowings: (json['recent_borrowings'] as List<dynamic>?)
+            ?.map((e) => RecentRequest.fromJson(e as Map<String, dynamic>))
+            .toList(),
 
-      // Officer
-      activeBorrowingsCount: _parseInt(json['active_borrowings_count']),
-      pendingRequestsCount: _parseInt(json['pending_approvals_count'] ?? json['pending_requests_count']),
-      overdueBorrowingsCount: _parseInt(json['overdue_borrowings_count']),
-      rejectedBorrowingsCount: _parseInt(json['rejected_borrowings_count']),
-      returnedBorrowingsCount: _parseInt(json['returned_borrowings_count']),
+        // Officer
+        activeBorrowingsCount: _parseInt(json['active_borrowings_count']),
+        pendingRequestsCount: _parseInt(json['pending_approvals_count'] ?? json['pending_requests_count']),
+        overdueBorrowingsCount: _parseInt(json['overdue_borrowings_count']),
+        rejectedBorrowingsCount: _parseInt(json['rejected_borrowings_count']),
+        returnedBorrowingsCount: _parseInt(json['returned_borrowings_count']),
 
-      // Student
-      totalAvailableAssets: _parseInt(json['total_available_assets']),
-      myActiveBorrowingsCount: _parseInt(json['my_active_borrowings_count']),
-      pendingBorrowingsCount: _parseInt(json['pending_borrowings_count']),
-      approvedOrOverdueBorrowingsCount: _parseInt(json['approved_or_overdue_borrowings_count']),
-      upcomingDueBorrowing: json['upcoming_due_borrowing'] as Map<String, dynamic>?,
-    );
+        // Student
+        totalAvailableAssets: _parseInt(json['total_available_assets']),
+        myActiveBorrowingsCount: _parseInt(json['my_active_borrowings_count']),
+        pendingBorrowingsCount: _parseInt(json['pending_borrowings_count']),
+        approvedOrOverdueBorrowingsCount: _parseInt(json['approved_or_overdue_borrowings_count']),
+        upcomingDueBorrowing: json['upcoming_due_borrowing'] as Map<String, dynamic>?,
+      );
+    } catch (e, stackTrace) {
+      debugPrint('DashboardStats.fromJson ERROR: $e');
+      debugPrint('Stack trace: $stackTrace');
+      debugPrint('Problematic JSON: $json');
+      // Return an empty stats object instead of crashing
+      return DashboardStats();
+    }
   }
 }

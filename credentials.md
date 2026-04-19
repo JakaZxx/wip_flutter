@@ -1,6 +1,6 @@
-# ASPAJ System Credentials List
+# 4LLASET System Credentials List
 
-This document contains authentication information for various roles in the ASPAJ (Aplikasi Peminjaman Aset Jurusan) system.
+This document contains authentication information for various roles in the 4LLASET (Aplikasi Peminjaman Aset Jurusan) system.
 
 ## 🔑 Admin (Full Access)
 These accounts have access to the administrative dashboard, user management, and global asset tracking.

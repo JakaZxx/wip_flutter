@@ -33,7 +33,7 @@ class AdminDashboardController extends Controller
             $recentUsers = User::where('approval_status', 'pending')
                 ->latest()
                 ->take(5)
-                ->get(['id', 'name', 'email', 'role', 'created_at']);
+                ->get(['id', 'name', 'email', 'role', 'profile_picture', 'created_at']);
 
             // Asset status summary
             $assetStatusCounts = Commodity::select('condition', DB::raw('COUNT(*) as count'))
@@ -68,21 +68,23 @@ class AdminDashboardController extends Controller
                     'asset_status' => $assetStatus,
                     'recent_users' => $recentUsers,
                     'recent_borrowings' => $recentBorrowings,
-                    // Placeholders for chart data if not yet implemented
                     'user_growth' => [
                         'labels' => [],
                         'data' => [],
                     ],
                     'rejected_borrowings_count' => \App\Models\Borrowing::where('status', 'rejected')->count(),
                     'returned_borrowings_count' => \App\Models\Borrowing::where('status', 'returned')->count(),
+                    // Added missing keys to match DashboardStats.dart
+                    'overdue_borrowings_count' => \App\Models\Borrowing::where('status', 'overdue')->count(),
+                    'asset_distribution' => [], 
                 ]
             ]);
         } catch (\Exception $e) {
-            \Log::error('AdminDashboardController::dashboardStats error', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            \Log::error('AdminDashboardController::dashboardStats ended with error');
+            \Log::error('AdminDashboardController::dashboardStats error: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred while fetching admin dashboard stats'
+                'message' => 'An error occurred while fetching admin dashboard stats: ' . $e->getMessage()
             ], 500);
         }
     }

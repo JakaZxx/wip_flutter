@@ -154,7 +154,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
-                                child: Text(user.role.toUpperCase(), style: GoogleFonts.outfit(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                                child: Text(_getRoleLabel(user.role), style: GoogleFonts.outfit(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
                               ),
                             ],
                           ),
@@ -226,7 +226,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ]),
         const SizedBox(height: 32),
         if (stats.recentUsers != null && stats.recentUsers!.isNotEmpty) ...[
-          _buildActivitySection('USER BARU', 'Menunggu Persetujuan atau Terbaru'),
+          _buildActivitySection('PENGGUNA BARU', 'Menunggu Persetujuan atau Terbaru'),
           const SizedBox(height: 16),
           ListView.builder(
             shrinkWrap: true,
@@ -243,7 +243,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _ActionData('Kelola Pengguna', FontAwesomeIcons.idCard, () => Navigator.pushNamed(context, '/admin-users')),
           _ActionData('Daftar Aset', FontAwesomeIcons.database, () => context.read<NavigationProvider>().setSelectedIndex(1)),
           _ActionData('Kelola Kelas', FontAwesomeIcons.graduationCap, () => Navigator.pushNamed(context, '/admin-classes')),
-          _ActionData('Aktivitas Sistem', FontAwesomeIcons.clockRotateLeft, () {
+          _ActionData('Log Aktivitas', FontAwesomeIcons.clockRotateLeft, () {
             Navigator.pushNamed(context, '/admin-logs');
           }),
         ]),
@@ -294,10 +294,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildSectionHeader(title, subtitle),
+        Expanded(child: _buildSectionHeader(title, subtitle)),
         TextButton(
           onPressed: () {}, 
-          child: Text('LIHAT SEMUA', style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.primaryBlue))
+          child: Text('LIHAT SEMUA', style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.primaryBlue)),
         ),
       ],
     );
@@ -315,9 +315,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.person_outline_rounded, size: 20, color: Color(0xFF64748B)),
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: user.profilePictureUrl != null
+                  ? Image.network(
+                      ApiService.fixPhotoUrl(user.profilePictureUrl)!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const Icon(Icons.person_outline_rounded, size: 20, color: Color(0xFF64748B)),
+                    )
+                  : const Icon(Icons.person_outline_rounded, size: 20, color: Color(0xFF64748B)),
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -351,9 +364,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: AppTheme.primaryBlue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.inventory_2_outlined, size: 20, color: AppTheme.primaryBlue),
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: request.profilePictureUrl != null
+                  ? Image.network(
+                      ApiService.fixPhotoUrl(request.profilePictureUrl)!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const Icon(Icons.inventory_2_outlined, size: 20, color: AppTheme.primaryBlue),
+                    )
+                  : const Icon(Icons.inventory_2_outlined, size: 20, color: AppTheme.primaryBlue),
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -380,8 +406,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-      child: Text(status?.toUpperCase() ?? 'PENDING', style: GoogleFonts.outfit(fontSize: 9, fontWeight: FontWeight.w900, color: color)),
+      child: Text(_translateStatus(status), style: GoogleFonts.outfit(fontSize: 9, fontWeight: FontWeight.w900, color: color)),
     );
+  }
+
+  String _translateStatus(String? status) {
+    if (status == null) return 'MENUNGGU';
+    switch (status.toLowerCase()) {
+      case 'pending': return 'MENUNGGU';
+      case 'approved': return 'DISETUJUI';
+      case 'partial':
+      case 'partially_approved': return 'DISETUJUI SEBAGIAN';
+      case 'partially_returned': return 'SEBAGIAN KEMBALI';
+      case 'rejected': return 'DITOLAK';
+      case 'returned': return 'KEMBALI';
+      default: return status.toUpperCase();
+    }
   }
 
   Widget _buildStudentDashboard(DashboardStats stats) {
@@ -424,7 +464,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2, crossAxisSpacing: 16, mainAxisSpacing: 16, childAspectRatio: 1.15,
+        crossAxisCount: 2, crossAxisSpacing: 16, mainAxisSpacing: 16, childAspectRatio: 0.88,
       ),
       itemCount: items.length,
       itemBuilder: (context, i) => _buildStatCard(items[i]),
@@ -433,7 +473,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildStatCard(_StatData item) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(30),
@@ -441,20 +481,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(color: item.color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(15)),
             child: FaIcon(item.icon, color: item.color, size: 18),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(item.value, style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.w900, color: const Color(0xFF1E293B))),
-              const SizedBox(height: 2),
-              Text(item.label, style: GoogleFonts.outfit(fontSize: 9, color: const Color(0xFF94A3B8), fontWeight: FontWeight.w900, letterSpacing: 1)),
-            ],
+          const Spacer(),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(item.value, style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w900, color: const Color(0xFF1E293B))),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  item.label, 
+                  style: GoogleFonts.outfit(fontSize: 8, color: const Color(0xFF94A3B8), fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -495,6 +547,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+
+  String _getRoleLabel(String role) {
+    switch (role.toLowerCase()) {
+      case 'admin': return 'ADMINISTRATOR';
+      case 'officers': return 'PETUGAS ASET';
+      case 'students': return 'SISWA / PEMINJAM';
+      default: return role.toUpperCase();
+    }
+  }
 
   Widget _buildLoadingState() {
     return Container(

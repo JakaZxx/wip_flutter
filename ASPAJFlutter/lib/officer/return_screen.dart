@@ -262,10 +262,15 @@ class _ReturnScreenState extends State<ReturnScreen> {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               ),
               style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF1E293B)),
-              items: ['good', 'fair', 'poor', 'damaged'].map((val) {
-                return DropdownMenuItem(
-                  value: val,
-                  child: Text(val.toUpperCase(), style: GoogleFonts.poppins(fontSize: 14)),
+              items: [
+                {'val': 'good', 'label': 'BAIK'},
+                {'val': 'fair', 'label': 'RUSAK RINGAN'},
+                {'val': 'poor', 'label': 'RUSAK BERAT'},
+                {'val': 'damaged', 'label': 'RUSAK PARAH'},
+              ].map((item) {
+                return DropdownMenuItem<String>(
+                  value: item['val'],
+                  child: Text(item['label'] as String, style: GoogleFonts.poppins(fontSize: 14)),
                 );
               }).toList(),
               onChanged: (value) => setState(() => _conditionController.text = value ?? ''),

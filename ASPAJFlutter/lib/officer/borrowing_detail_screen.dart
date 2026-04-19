@@ -67,6 +67,7 @@ class _BorrowingDetailScreenState extends State<BorrowingDetailScreen> {
     final authProvider = context.watch<AuthProvider>();
     final borrowingProvider = context.watch<BorrowingProvider>();
     final userRole = authProvider.user?.role;
+    final userJurusan = authProvider.user?.jurusan?.toLowerCase();
     
     // Sync with provider state
     final borrowing = borrowingProvider.borrowings.firstWhere(
@@ -98,7 +99,7 @@ class _BorrowingDetailScreenState extends State<BorrowingDetailScreen> {
                   if (_isLoadingCommodities)
                     _buildLoadingState()
                   else
-                    ...borrowing.items.map((item) => _buildItemCard(context, item, userRole, borrowing)),
+                    ...borrowing.items.map((item) => _buildItemCard(context, item, userRole, userJurusan, borrowing)),
                   const SizedBox(height: 120),
                 ],
               ),
@@ -106,7 +107,7 @@ class _BorrowingDetailScreenState extends State<BorrowingDetailScreen> {
           ),
         ],
       ),
-      bottomSheet: _buildActionZone(context, borrowing, userRole),
+      bottomSheet: _buildActionZone(context, borrowing, userRole, userJurusan),
     );
   }
 
@@ -174,7 +175,9 @@ class _BorrowingDetailScreenState extends State<BorrowingDetailScreen> {
     switch (status.toLowerCase()) {
       case 'pending': color = Colors.orange; return _buildStatusBadgeUI('MENUNGGU', color);
       case 'approved': color = const Color(0xFF10B981); return _buildStatusBadgeUI('DISETUJUI', color);
-      case 'partially_approved': color = const Color(0xFF10B981); return _buildStatusBadgeUI('DISETUJUI SEBAGIAN', color);
+      case 'partial':
+      case 'partially_approved': color = const Color(0xFF6366F1); return _buildStatusBadgeUI('DISETUJUI SEBAGIAN', color);
+      case 'partially_returned': color = const Color(0xFF0D9488); return _buildStatusBadgeUI('SEBAGIAN KEMBALI', color);
       case 'returned': color = Colors.blue; return _buildStatusBadgeUI('DIKEMBALIKAN', color);
       case 'rejected': color = Colors.red; return _buildStatusBadgeUI('DITOLAK', color);
       default: return _buildStatusBadgeUI(status.toUpperCase(), color);
@@ -211,7 +214,7 @@ class _BorrowingDetailScreenState extends State<BorrowingDetailScreen> {
             children: [
               _buildTimelineStep('Diajukan', true, true),
               _buildTimelineConnector(borrowing.status != 'pending'),
-              _buildTimelineStep('Disetujui', ['approved', 'returned', 'partially_returned', 'partially_approved'].contains(borrowing.status.toLowerCase()), borrowing.status != 'rejected'),
+              _buildTimelineStep('Disetujui', ['approved', 'returned', 'partially_returned', 'partially_approved', 'partial'].contains(borrowing.status.toLowerCase()), borrowing.status != 'rejected'),
               _buildTimelineConnector(borrowing.status == 'returned'),
               _buildTimelineStep('Kembali', borrowing.status == 'returned', true),
             ],
@@ -262,7 +265,9 @@ class _BorrowingDetailScreenState extends State<BorrowingDetailScreen> {
   String _getTimelineDescription(Borrowing b) {
     if (b.status == 'pending') return 'Permintaan Anda sedang menunggu persetujuan petugas.';
     if (b.status == 'rejected') return 'Permintaan ini ditolak. Silakan hubungi administrasi.';
-    if (b.status == 'approved' || b.status == 'partially_approved') return 'Disetujui! Barang siap digunakan atau sedang dipinjam.';
+    if (['approved', 'partially_approved', 'partial', 'partially_returned'].contains(b.status.toLowerCase())) {
+      return 'Terverifikasi! Barang siap digunakan atau sedang dalam masa peminjaman.';
+    }
     if (b.status == 'returned') return 'Selesai. Semua barang telah dikembalikan dan divalidasi.';
     return 'Memproses transaksi...';
   }
@@ -286,11 +291,25 @@ class _BorrowingDetailScreenState extends State<BorrowingDetailScreen> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [BoxShadow(color: AppTheme.primaryBlue.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))],
             ),
-            child: Center(
-              child: Text(
-                borrowing.studentName[0].toUpperCase(),
-                style: GoogleFonts.outfit(fontWeight: FontWeight.w900, color: Colors.white, fontSize: 24),
-              ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: borrowing.student?.user?.profilePictureUrl != null
+                  ? Image.network(
+                      ApiService.fixPhotoUrl(borrowing.student!.user!.profilePictureUrl)!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Center(
+                        child: Text(
+                          borrowing.studentName[0].toUpperCase(),
+                          style: GoogleFonts.outfit(fontWeight: FontWeight.w900, color: Colors.white, fontSize: 24),
+                        ),
+                      ),
+                    )
+                  : Center(
+                      child: Text(
+                        borrowing.studentName[0].toUpperCase(),
+                        style: GoogleFonts.outfit(fontWeight: FontWeight.w900, color: Colors.white, fontSize: 24),
+                      ),
+                    ),
             ),
           ),
           const SizedBox(width: 16),
@@ -386,10 +405,14 @@ class _BorrowingDetailScreenState extends State<BorrowingDetailScreen> {
     );
   }
 
-  Widget _buildItemCard(BuildContext context, BorrowingItem item, String? role, Borrowing borrowing) {
+  Widget _buildItemCard(BuildContext context, BorrowingItem item, String? role, String? userJurusan, Borrowing borrowing) {
     final isPending = (item.status ?? '').toLowerCase() == 'pending';
     final isSelected = _selectedItemIds.contains(item.id);
-    final canProcess = (role == 'officers' || role == 'admin') && isPending;
+    
+    final itemJurusan = item.commodity?.jurusan?.toLowerCase().trim();
+    final isOfficerForJurusan = role == 'officers' && 
+        (itemJurusan == userJurusan || itemJurusan == 'semua' || itemJurusan == null);
+    final canProcess = (isOfficerForJurusan || role == 'admin') && isPending;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -530,7 +553,7 @@ class _BorrowingDetailScreenState extends State<BorrowingDetailScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Returned in ${item.returnCondition ?? "Good"} condition.',
+              'Dikembalikan dalam kondisi ${item.returnCondition ?? "Baik"}.',
               style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w500, color: const Color(0xFF0369A1)),
             ),
           ),
@@ -622,11 +645,24 @@ class _BorrowingDetailScreenState extends State<BorrowingDetailScreen> {
     );
   }
 
-  Widget _buildActionZone(BuildContext context, Borrowing b, String? role) {
+  Widget _buildActionZone(BuildContext context, Borrowing b, String? role, String? userJurusan) {
     if (role == 'students') return const SizedBox.shrink();
     
-    final hasPending = b.items.any((i) => i.status == 'pending');
-    final hasApproved = b.items.any((i) => i.status == 'approved');
+    final hasPending = b.items.any((i) {
+      final isPending = i.status == 'pending';
+      final itemJurusan = i.commodity?.jurusan?.toLowerCase().trim();
+      final isOfficerForJurusan = role == 'officers' && 
+          (itemJurusan == userJurusan || itemJurusan == 'semua' || itemJurusan == null);
+      return isPending && (isOfficerForJurusan || role == 'admin');
+    });
+
+    final hasApproved = b.items.any((i) {
+      final isApproved = i.status == 'approved';
+      final itemJurusan = i.commodity?.jurusan?.toLowerCase().trim();
+      final isOfficerForJurusan = role == 'officers' && 
+          (itemJurusan == userJurusan || itemJurusan == 'semua' || itemJurusan == null);
+      return isApproved && (isOfficerForJurusan || role == 'admin');
+    });
 
     if (!hasPending && !hasApproved) return const SizedBox.shrink();
 
@@ -665,7 +701,13 @@ class _BorrowingDetailScreenState extends State<BorrowingDetailScreen> {
                       AppTheme.primaryBlue, 
                       () {
                         final targets = _selectedItemIds.isEmpty 
-                          ? b.items.where((i) => i.status == 'approved').map((i) => i.id!).toList()
+                          ? b.items.where((i) {
+                              final isApproved = i.status == 'approved';
+                              final itemJurusan = i.commodity?.jurusan?.toLowerCase().trim();
+                              final isOfficerForJurusan = role == 'officers' && 
+                                  (itemJurusan == userJurusan || itemJurusan == 'semua' || itemJurusan == null);
+                              return isApproved && (isOfficerForJurusan || role == 'admin');
+                            }).map((i) => i.id!).toList()
                           : _selectedItemIds.toList();
                         
                         if (targets.isEmpty) {
@@ -748,10 +790,20 @@ class _BorrowingDetailScreenState extends State<BorrowingDetailScreen> {
   }
 
   Future<void> _processBulkAction(BuildContext context, Borrowing b, String action, {int? singleItemId}) async {
+    final authProvider = context.read<AuthProvider>();
+    final role = authProvider.user?.role;
+    final userJurusan = authProvider.user?.jurusan?.toLowerCase();
+
     final targets = singleItemId != null 
         ? [singleItemId] 
         : (_selectedItemIds.isEmpty 
-            ? b.items.where((i) => (i.status ?? '').toLowerCase() == 'pending').map((i) => i.id!).toList() 
+            ? b.items.where((i) {
+                final isPending = (i.status ?? '').toLowerCase() == 'pending';
+                final itemJurusan = i.commodity?.jurusan?.toLowerCase().trim();
+                final isOfficerForJurusan = role == 'officers' && 
+                    (itemJurusan == userJurusan || itemJurusan == 'semua' || itemJurusan == null);
+                return isPending && (isOfficerForJurusan || role == 'admin');
+              }).map((i) => i.id!).toList() 
             : _selectedItemIds.toList());
     
     if (targets.isEmpty) {

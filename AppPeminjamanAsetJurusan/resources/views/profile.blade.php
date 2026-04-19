@@ -16,11 +16,20 @@
 
         </div>
         <div class="profile-info text-center">
-            <h2>{{ $user->name }}</h2>
-            <p>{{ $user->email }} <span class="verification-status {{ $user->hasVerifiedEmail() ? 'verified' : 'not-verified' }}">{{ $user->hasVerifiedEmail() ? 'Verified' : 'Not Verified' }}</span></p>
+            <p>{{ $user->email }} 
+                <span class="verification-status {{ $user->hasVerifiedEmail() ? 'verified' : 'not-verified' }}">
+                    {{ $user->hasVerifiedEmail() ? 'Verified' : 'Not Verified' }}
+                </span>
+                @if(!$user->hasVerifiedEmail())
+                <form action="{{ route('verification.send') }}" method="POST" class="inline">
+                    @csrf
+                    <button type="submit" class="text-xs text-blue-500 underline ml-2 hover:text-blue-700">Resend Verification</button>
+                </form>
+                @endif
+            </p>
             <span class="role-badge">{{ ucfirst($user->role) }}</span>
             @if($user->student && $user->student->schoolClass)
-            <p class="mt-2">{{ $user->student->schoolClass->name }}</p>
+            <p class="mt-2 text-sm text-gray-600">{{ $user->student->schoolClass->name }}</p>
             @endif
         </div>
     </div>

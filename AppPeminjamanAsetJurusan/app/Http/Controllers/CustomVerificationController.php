@@ -14,21 +14,31 @@ class CustomVerificationController extends Controller
      * @param  \Illuminate\Foundation\Auth\EmailVerificationRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function verify(EmailVerificationRequest $request): RedirectResponse
+    public function verify(\Illuminate\Http\Request $request): RedirectResponse
     {
-        $request->fulfill();
+        $user = \App\Models\User::findOrFail($request->route('id'));
 
-        $user = $request->user();
+        if (! hash_equals((string) $request->route('hash'), sha1($user->getEmailForVerification()))) {
+            abort(403, 'Invalid verification link');
+        }
 
-        // After email verification, if student still needs to change password, redirect to change password page
+        if ($user->hasVerifiedEmail()) {
+            return redirect()->route('login')->with('success', 'Email already verified. Please login.');
+        }
+
+        if ($user->markEmailAsVerified()) {
+            event(new \Illuminate\Auth\Events\Verified($user));
+        }
+
+        // After email verification, if student still needs to change password, redirect to login page with flag
         if ($user->isStudent() && $user->must_change_password) {
             Auth::logout(); // Log out to force re-login for password change
             // Instead of redirecting directly, redirect to login with a session flag
             return redirect()->route('login')->with('must_change_password', true)->with('success', 'Email berhasil diverifikasi. Silakan ubah password Anda.');
         }
 
-        // If password already changed, redirect to dashboard
-        return redirect()->route('students.dashboard')->with('success', 'Email berhasil diverifikasi.');
+        // If password already changed, redirect to login so they can return to the app
+        return redirect()->route('login')->with('success', 'Email berhasil diverifikasi. Silakan kembali ke aplikasi.');
     }
 
     /**

@@ -113,7 +113,7 @@ class _AdminClassesScreenState extends State<AdminClassesScreen> {
         ),
         centerTitle: true,
         title: Text(
-          'ACADEMIC HUB',
+          'PUSAT AKADEMIK',
           style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 18, color: Colors.white, letterSpacing: 2),
         ),
       ),
@@ -214,7 +214,7 @@ class _AdminClassesScreenState extends State<AdminClassesScreen> {
         crossAxisCount: 2,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.85,
+        childAspectRatio: 0.75,
       ),
       itemCount: filtered.length,
       itemBuilder: (context, i) => _buildClassCardPremium(filtered[i]),

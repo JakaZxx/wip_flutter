@@ -38,6 +38,25 @@ class Commodity {
   });
 
   factory Commodity.fromJson(Map<String, dynamic> json) {
+    int? parseTahun(Map<String, dynamic> json) {
+      if (json['tahun'] == null) return null;
+      final val = json['tahun'].toString().trim();
+      if (val.isEmpty) return null;
+      return int.tryParse(val) ?? int.tryParse(val.replaceAll(RegExp(r'[^0-9]'), ''));
+    }
+
+    double? parseHarga(Map<String, dynamic> json) {
+      if (json['harga_satuan'] == null) return null;
+      final val = json['harga_satuan'].toString().trim();
+      if (val.isEmpty) return null;
+      return double.tryParse(val) ?? double.tryParse(val.replaceAll(RegExp(r'[^0-9.]'), ''));
+    }
+
+    DateTime? parseDate(dynamic date) {
+      if (date == null) return null;
+      return DateTime.tryParse(date.toString());
+    }
+
     return Commodity(
       id: json['id'] ?? 0,
       name: json['name'] ?? 'Unknown Name',
@@ -46,16 +65,14 @@ class Commodity {
       jurusan: json['jurusan'],
       lokasi: json['lokasi'],
       condition: json['condition'],
-      photoUrl: json['photo_url'], // Memetakan photo_url dari JSON
+      photoUrl: json['photo_url'],
       merk: json['merk'],
       sumber: json['sumber'],
-      tahun: json['tahun'] != null ? int.parse(json['tahun'].toString()) : null,
+      tahun: parseTahun(json),
       deskripsi: json['deskripsi'],
-      hargaSatuan: json['harga_satuan'] != null
-          ? double.parse(json['harga_satuan'].toString())
-          : null,
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now(),
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : DateTime.now(),
+      hargaSatuan: parseHarga(json),
+      createdAt: parseDate(json['created_at']) ?? DateTime.now(),
+      updatedAt: parseDate(json['updated_at']) ?? DateTime.now(),
     );
   }
 

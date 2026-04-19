@@ -12,6 +12,24 @@ class ClassesImport implements ToModel, WithHeadingRow, WithValidation, WithChun
 {
     public function model(array $row)
     {
+        $user = auth()->user();
+        if ($user && $user->role == 'officers') {
+            $userJurusan = strtolower($user->jurusan);
+            $rowJurusan = strtolower($row['program_studi']);
+            
+            $isMatch = str_contains($rowJurusan, $userJurusan);
+            if ($userJurusan == 'rpl' && str_contains($rowJurusan, 'rekayasa perangkat lunak')) $isMatch = true;
+            if ($userJurusan == 'tkj' && str_contains($rowJurusan, 'teknik komputer jaringan')) $isMatch = true;
+            if ($userJurusan == 'dkv' && str_contains($rowJurusan, 'desain komunikasi visual')) $isMatch = true;
+            if ($userJurusan == 'toi' && str_contains($rowJurusan, 'teknik otomasi industri')) $isMatch = true;
+            if ($userJurusan == 'titl' && str_contains($rowJurusan, 'teknik instalasi tenaga listrik')) $isMatch = true;
+            if ($userJurusan == 'tav' && str_contains($rowJurusan, 'teknik audio video')) $isMatch = true;
+
+            if (!$isMatch) {
+                return null; // Skip if not matching officer's department
+            }
+        }
+
         // Check if class already exists by name
         $existingClass = SchoolClass::where('name', $row['nama_kelas'])->first();
         if ($existingClass) {

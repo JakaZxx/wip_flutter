@@ -43,17 +43,9 @@ class Commodity extends Model
                 return $path;
             }
 
-            // Clean up common incorrect prefixes if they exist in DB
-            $path = str_replace(['public/', '/storage/', 'storage/'], '', $path);
+            $path = str_replace(['public/', '/storage/', 'storage/', 'commodities/'], '', $path);
             $path = ltrim($path, '/');
-
-            // Check existence in storage link
-            if (file_exists(public_path('storage/' . $path))) {
-                return asset('storage/' . $path);
-            }
-            
-            // Fallback: prepend storage/ if not already there
-            return asset('storage/' . $path);
+            return asset('storage/commodities/' . $path);
         }
         return asset('images/default-asset.png');
     }

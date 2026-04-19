@@ -9,6 +9,7 @@ import '../providers/navigation_provider.dart';
 import '../models/borrowing.dart';
 import '../models/borrowing_item.dart';
 import '../theme/app_theme.dart';
+import '../services/api_service.dart';
 import 'borrowing_detail_screen.dart';
 
 class BorrowingStatusScreen extends StatefulWidget {
@@ -436,6 +437,11 @@ class BorrowingCardPremium extends StatelessWidget {
   }
 
   Widget _buildAvatar() {
+    String? photoUrl;
+    if (borrowing.student?.user?.profilePictureUrl != null) {
+      photoUrl = ApiService.fixPhotoUrl(borrowing.student!.user!.profilePictureUrl);
+    }
+
     return Container(
       width: 48,
       height: 48,
@@ -444,11 +450,24 @@ class BorrowingCardPremium extends StatelessWidget {
         gradient: LinearGradient(colors: [AppTheme.primaryBlue.withValues(alpha: 0.1), const Color(0xFF2563EB).withValues(alpha: 0.05)]),
         border: Border.all(color: Colors.white, width: 2),
       ),
-      child: Center(
-        child: Text(
-          borrowing.studentName[0].toUpperCase(),
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppTheme.primaryBlue, fontSize: 18),
-        ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: photoUrl != null
+            ? Image.network(
+                photoUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+              )
+            : _buildPlaceholder(),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Center(
+      child: Text(
+        borrowing.studentName[0].toUpperCase(),
+        style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppTheme.primaryBlue, fontSize: 18),
       ),
     );
   }
@@ -464,6 +483,7 @@ class BorrowingCardPremium extends StatelessWidget {
       case 'returned': color = AppTheme.primaryBlue; icon = Icons.assignment_turned_in_outlined; text = 'KEMBALI'; break;
       case 'rejected': color = const Color(0xFFEF4444); icon = Icons.cancel_outlined; text = 'DITOLAK'; break;
       case 'partially_returned': color = const Color(0xFF0D9488); icon = Icons.published_with_changes_rounded; text = 'SEBAGIAN KEMBALI'; break;
+      case 'partial':
       case 'partially_approved': color = const Color(0xFF6366F1); icon = Icons.check_circle_outline_rounded; text = 'DISETUJUI SEBAGIAN'; break;
     }
 

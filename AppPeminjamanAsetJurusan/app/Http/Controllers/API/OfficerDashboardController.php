@@ -109,7 +109,17 @@ class OfficerDashboardController extends Controller
                     'returned_borrowings_count' => Borrowing::where('status', 'returned')
                         ->whereHas('items.commodity', fn($q) => $q->where('jurusan', $jurusan))
                         ->count(),
-                    'due_soon' => $due_soon_borrowings,
+                    'recent_borrowings' => $newRequests->map(function($b) {
+                        return [
+                            'id' => $b->id,
+                            'student_name' => $b->student->user->name ?? 'Student',
+                            'profile_picture_url' => $b->student->user->profile_picture_url ?? null,
+                            'status' => $b->status,
+                            'created_at' => $b->created_at,
+                            'items' => $b->items->map(fn($i) => $i->commodity->name ?? 'Item')->toArray(),
+                        ];
+                    }),
+                    'due_soon' => $dueSoonBorrowings,
                 ]
             ]);
         } catch (\Exception $e) {

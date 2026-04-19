@@ -472,13 +472,13 @@
 
     <div class="cards-container">
         @forelse ($borrowings as $borrowing)
-            <div class="card" id="card-{{ $borrowing->id }}" data-commodities='@json($borrowing->commodities->map(fn($c) => ["name" => $c->name, "quantity" => $c->pivot->quantity, "photo" => $c->photo])->values()->toArray())' data-items='@json($borrowing->items->where("status", "approved")->filter(fn($item) => $item->commodity)->map(fn($item) => ["id" => $item->id, "name" => $item->commodity->name])->values()->toArray())'>
+            <div class="card" id="card-{{ $borrowing->id }}" data-commodities='@json($borrowing->commodities->map(fn($c) => ["name" => $c->name, "quantity" => $c->pivot->quantity, "photo" => $c->photo_url])->values()->toArray())' data-items='@json($borrowing->items->where("status", "approved")->filter(fn($item) => $item->commodity)->map(fn($item) => ["id" => $item->id, "name" => $item->commodity->name])->values()->toArray())'>
                 @if($borrowing->commodities->count() > 1)
                     <div class="slider" id="slider-{{ $borrowing->id }}">
                         <div class="slider-images" style="transform: translateX(0%);">
                             @foreach($borrowing->commodities as $index => $commodity)
-                                @if($commodity->photo)
-                                    <img src="{{ $commodity->photo }}" alt="{{ $commodity->name }}">
+                                @if($commodity->photo_url)
+                                    <img src="{{ $commodity->photo_url }}" alt="{{ $commodity->name }}">
                                 @else
                                     <div class="no-image"><i class="fas fa-camera"></i></div>
                                 @endif
@@ -503,8 +503,8 @@
                         $firstCommodity = $borrowing->commodities->first();
                     @endphp
                     @if($firstCommodity)
-                        @if($firstCommodity->photo)
-                            <img src="{{ $firstCommodity->photo }}" alt="{{ $firstCommodity->name }}">
+                        @if($firstCommodity->photo_url)
+                            <img src="{{ $firstCommodity->photo_url }}" alt="{{ $firstCommodity->name }}">
                         @else
                             <div class="no-image"><i class="fas fa-camera"></i></div>
                         @endif

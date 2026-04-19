@@ -20,7 +20,9 @@ class AssetsScreen extends StatefulWidget {
 
 class _AssetsScreenState extends State<AssetsScreen> {
   final TextEditingController _searchController = TextEditingController();
-  String _selectedCategory = 'All';
+  String? _selectedCategory = 'Semua';
+  String _selectedJurusan = 'Semua';
+  bool _isFirstLoad = true;
 
   @override
   void initState() {
@@ -34,6 +36,16 @@ class _AssetsScreenState extends State<AssetsScreen> {
   void _fetchInitialData() {
     final authProvider = context.read<AuthProvider>();
     final user = authProvider.user;
+    
+    if (_isFirstLoad) {
+      if (user?.role == 'officers' && user?.jurusan != null) {
+        // Automatically select the department chip for officers
+        // but backend 'index' already filters by user's jurusan if they are an officer.
+        // So 'All' actually means 'All My Department' for officers now.
+      }
+      _isFirstLoad = false;
+    }
+
     if (user?.role == 'officers') {
       context.read<CommodityProvider>().fetchCommodities(jurusan: user?.jurusan);
     } else {
@@ -54,7 +66,7 @@ class _AssetsScreenState extends State<AssetsScreen> {
         slivers: [
           _buildSliverAppBar(isAdminOrOfficer),
           SliverToBoxAdapter(
-            child: _buildSearchAndFilterHeader(isAdminOrOfficer),
+            child: _buildSearchAndFilterHeader(authProvider),
           ),
           Consumer<CommodityProvider>(
             builder: (context, provider, child) {
@@ -71,21 +83,44 @@ class _AssetsScreenState extends State<AssetsScreen> {
               }
 
               final filtered = provider.commodities.where((c) {
-                if (_selectedCategory == 'All') return true;
-                if (_selectedCategory == 'Tersedia') return c.stock > 0;
-                if (_selectedCategory == 'Habis') return c.stock <= 0;
+                if (_searchController.text.isNotEmpty) {
+                  final name = c.name.toLowerCase();
+                  final code = (c.code ?? '').toLowerCase();
+                  final query = _searchController.text.toLowerCase();
+                  if (!name.contains(query) && !code.contains(query)) return false;
+                }
+
+                if (_selectedCategory == 'Semua') {
+                  return true;
+                } else if (_selectedCategory == 'Tersedia') {
+                  return c.stock > 0;
+                } else if (_selectedCategory == 'Habis') {
+                  return c.stock <= 0;
+                }
                 
                 // Normalisasi pengecekan jurusan
                 final itemJurusan = (c.jurusan ?? '').toLowerCase();
-                final targetFilter = _selectedCategory.toLowerCase();
+                final targetFilter = _selectedCategory!.toLowerCase();
                 
-                // Mappings
-                if (targetFilter == 'rpl' && (itemJurusan.contains('rekayasa') || itemJurusan == 'rpl')) return true;
-                if (targetFilter == 'tkj' && (itemJurusan.contains('jaringan') || itemJurusan == 'tkj')) return true;
-                if (targetFilter == 'dkv' && (itemJurusan.contains('komunikasi visual') || itemJurusan == 'dkv')) return true;
-                if (targetFilter == 'toi' && (itemJurusan.contains('otomasi') || itemJurusan == 'toi')) return true;
-                if (targetFilter == 'titl' && (itemJurusan.contains('tenaga listrik') || itemJurusan == 'titl')) return true;
-                if (targetFilter == 'tav' && (itemJurusan.contains('audio video') || itemJurusan == 'tav')) return true;
+                // Mappings for robust filtering
+                if (targetFilter == 'rpl') {
+                   return itemJurusan.contains('rekayasa') || itemJurusan.contains('perangkat lunak') || itemJurusan == 'rpl';
+                }
+                if (targetFilter == 'tkj') {
+                   return itemJurusan.contains('jaringan') || itemJurusan.contains('komputer') || itemJurusan == 'tkj';
+                }
+                if (targetFilter == 'dkv') {
+                   return itemJurusan.contains('komunikasi visual') || itemJurusan == 'dkv';
+                }
+                if (targetFilter == 'toi') {
+                   return itemJurusan.contains('otomasi') || itemJurusan == 'toi';
+                }
+                if (targetFilter == 'titl') {
+                   return itemJurusan.contains('tenaga listrik') || itemJurusan == 'titl';
+                }
+                if (targetFilter == 'tav') {
+                   return itemJurusan.contains('audio video') || itemJurusan == 'tav';
+                }
 
                 return itemJurusan == targetFilter;
               }).toList();
@@ -214,7 +249,7 @@ class _AssetsScreenState extends State<AssetsScreen> {
     );
   }
 
-  Widget _buildSearchAndFilterHeader(bool isAdmin) {
+  Widget _buildSearchAndFilterHeader(AuthProvider authProvider) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
       child: Column(
@@ -240,16 +275,26 @@ class _AssetsScreenState extends State<AssetsScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          _buildCategoryChips(isAdmin),
+          _buildCategoryChips(authProvider),
         ],
       ),
     );
   }
 
-  Widget _buildCategoryChips(bool isAdmin) {
-    final categories = isAdmin 
-      ? ['All', 'RPL', 'TKJ', 'DKV', 'TOI', 'TITL', 'TAV']
-      : ['All', 'Tersedia', 'Habis', 'RPL', 'TKJ'];
+  Widget _buildCategoryChips(AuthProvider authProvider) {
+    final user = authProvider.user;
+    final isAdmin = user?.role == 'admin';
+    final isOfficer = user?.role == 'officers';
+
+    List<String> categories;
+    if (isAdmin) {
+      categories = ['Semua', 'RPL', 'TKJ', 'DKV', 'TOI', 'TITL', 'TAV'];
+    } else if (isOfficer) {
+      final userJurusan = authProvider.user?.jurusan ?? 'Umum';
+      categories = ['Semua', userJurusan];
+    } else {
+      categories = ['Semua', 'Tersedia', 'Habis', 'Dipinjam'];
+    }
 
     return SizedBox(
       height: 40,
@@ -312,7 +357,7 @@ class _AssetsScreenState extends State<AssetsScreen> {
         crossAxisCount: 2,
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
-        childAspectRatio: 0.72,
+        childAspectRatio: 0.7, // Slightly taller for safety
       ),
       delegate: SliverChildBuilderDelegate(
         (context, index) => BorrowingAssetCardPremium(commodity: commodities[index]),
@@ -480,9 +525,12 @@ class ManagementAssetCardPremium extends StatelessWidget {
                         color: commodity.stock > 0 ? const Color(0xFF10B981) : Colors.red,
                       ),
                     ),
-                    Text(
-                      commodity.jurusan ?? 'Semua',
-                      style: GoogleFonts.poppins(fontSize: 9, color: const Color(0xFF64748B)),
+                    Flexible(
+                      child: Text(
+                        commodity.jurusan ?? 'Semua',
+                        style: GoogleFonts.poppins(fontSize: 9, color: const Color(0xFF64748B)),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
@@ -611,7 +659,7 @@ class BorrowingAssetCardPremium extends StatelessWidget {
     return InkWell(
       onTap: commodity.stock > 0 ? () {
         if (!isInCart) {
-          borrows.addToCart(commodity.id, 1);
+          borrows.addToCart(commodity.id, 1, commodity: commodity);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('${commodity.name} ditambahkan ke keranjang'),
@@ -624,18 +672,17 @@ class BorrowingAssetCardPremium extends StatelessWidget {
       } : null,
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        width: 32, // Added fixed size for better alignment
+        width: 32,
         height: 32,
+        alignment: Alignment.center,
         decoration: BoxDecoration(
           color: isInCart ? const Color(0xFF10B981) : (commodity.stock > 0 ? AppTheme.primaryBlue : Colors.grey[200]),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Center(
-          child: Icon(
-            isInCart ? Icons.check_rounded : Icons.add_rounded,
-            color: Colors.white,
-            size: 18,
-          ),
+        child: Icon(
+          isInCart ? Icons.check_rounded : Icons.add_rounded,
+          color: Colors.white,
+          size: 18,
         ),
       ),
     );

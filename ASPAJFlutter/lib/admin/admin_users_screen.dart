@@ -233,10 +233,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             const SizedBox(height: 2),
             Text(user.email, style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF64748B))),
             const SizedBox(height: 10),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 _buildBadge(user.role.toUpperCase(), roleColor),
-                const SizedBox(width: 8),
                 _buildBadge(statusText, statusColor, isOutline: true),
               ],
             ),
@@ -385,7 +386,13 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   }
 
   String _getStatusTextPremium(User user) {
-    if (user.role == 'officers') return user.approvalStatus.toUpperCase();
+    if (user.role == 'officers') {
+      switch (user.approvalStatus) {
+        case 'approved': return 'DISETUJUI';
+        case 'rejected': return 'DITOLAK';
+        default: return 'PENDING';
+      }
+    }
     return user.emailVerifiedAt != null ? 'TERVERIFIKASI' : 'BELUM VERIFIKASI';
   }
 

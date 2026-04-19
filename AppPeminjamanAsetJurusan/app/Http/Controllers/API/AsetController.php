@@ -52,15 +52,25 @@ class AsetController extends Controller
     {
         Log::info('AsetController::index started');
         try {
-            // Mengambil query parameter jurusan jika ada
-            $jurusan = $request->query('jurusan');
+            // Get authenticated user
+            $user = auth()->user();
 
-            // Jika jurusan disediakan, filter berdasarkan jurusan, jika tidak ambil semua
-            if ($jurusan) {
-                $commodities = Commodity::where('jurusan', $jurusan)->get();
+            // If user is an officer, force filter to their jurusan
+            if ($user && $user->isOfficer()) {
+                $jurusan = $user->jurusan;
             } else {
-                $commodities = Commodity::all();
+                // If not officer, use query parameter if provided
+                $jurusan = $request->query('jurusan');
             }
+
+            // Apply filtering logic
+            $query = Commodity::query();
+            if ($jurusan && strtolower($jurusan) !== 'all') {
+                $jurusanLower = strtolower($jurusan);
+                $query->whereRaw('LOWER(TRIM(jurusan)) = ? OR LOWER(TRIM(jurusan)) = ? OR jurusan IS NULL', [$jurusanLower, 'semua']);
+            }
+            
+            $commodities = $query->get();
 
             // Tambahkan photo_url untuk setiap commodity
             $commodities = $commodities->map(function ($commodity) {
@@ -71,9 +81,9 @@ class AsetController extends Controller
             Log::info('AsetController::index ended');
             // Mengembalikan response JSON dengan struktur yang diminta
             return response()->json([
-                'success' => true, // Menandakan operasi berhasil
-                'message' => 'Data aset berhasil diambil', // Pesan hasil operasi
-                'data' => $commodities // Data aset dalam bentuk array
+                'success' => true,
+                'message' => 'Data aset berhasil diambil',
+                'data' => $commodities
             ]);
         } catch (\Exception $e) {
             Log::error('AsetController::index error', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
@@ -97,19 +107,30 @@ class AsetController extends Controller
             // Validasi input yang diterima dari request
             // Pastikan field yang diperlukan ada dan sesuai tipe data
             $validator = Validator::make($request->all(), [
-                'name' => 'required|string|max:255', // Nama aset wajib, string, maksimal 255 karakter
-                'code' => 'required|string|max:255|unique:commodities,code', // Kode unik wajib
-                'stock' => 'required|integer|min:0', // Stok wajib, integer, minimal 0
-                'jurusan' => 'required|string|max:255', // Jurusan Wajib
-                'lokasi' => 'required|string|max:255', // Lokasi opsional
-                'condition' => 'nullable|string|max:255', // Kondisi opsional
-                'photo' => 'nullable|string|max:255', // Foto opsional (path atau URL)
-                'merk' => 'required|string|max:255', // Merk opsional
-                'sumber' => 'nullable|string|max:255', // Sumber opsional
-                'tahun' => 'nullable|integer|min:1900|max:' . (date('Y') + 1), // Tahun opsional, integer
-                'deskripsi' => 'nullable|string', // Deskripsi opsional
-                'harga_satuan' => 'nullable|numeric|min:0' // Harga satuan opsional, numeric
+                'name' => 'required|string|max:255',
+                'code' => 'required|string|max:255|unique:commodities,code',
+                'stock' => 'required|integer|min:0',
+                'jurusan' => 'required|string|max:255',
+                'lokasi' => 'required|string|max:255',
+                'condition' => 'nullable|string|max:255',
+                'photo' => 'nullable|string|max:255',
+                'merk' => 'required|string|max:255',
+                'sumber' => 'nullable|string|max:255',
+                'tahun' => 'nullable|integer|min:1900|max:' . (date('Y') + 1),
+                'deskripsi' => 'nullable|string',
+                'harga_satuan' => 'nullable|numeric|min:0'
             ]);
+
+            // If user is an officer, ensure they only add assets for their own jurusan
+            $user = auth()->user();
+            if ($user && $user->isOfficer()) {
+                if (strtolower($request->input('jurusan')) !== strtolower($user->jurusan)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized: Officers can only add assets for their own department (' . strtoupper($user->jurusan) . ').',
+                    ], 403);
+                }
+            }
 
             // Jika validasi gagal, kembalikan error
             if ($validator->fails()) {
@@ -153,6 +174,25 @@ class AsetController extends Controller
         try {
             // Mencari aset berdasarkan ID, jika tidak ditemukan throw exception
             $commodity = Commodity::findOrFail($id);
+
+            // If user is an officer, ensure they only update assets from their own jurusan
+            $user = auth()->user();
+            if ($user && $user->isOfficer()) {
+                if (strtolower($commodity->jurusan) !== strtolower($user->jurusan)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized: Officers can only update assets belonging to their own department (' . strtoupper($user->jurusan) . ').',
+                    ], 403);
+                }
+                
+                // Also prevent them from changing the jurusan to something else
+                if ($request->has('jurusan') && strtolower($request->input('jurusan')) !== strtolower($user->jurusan)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized: Officers cannot change the department of an asset.',
+                    ], 403);
+                }
+            }
 
             // Validasi input, mirip dengan store tapi code tidak perlu unique karena update
             $validator = Validator::make($request->all(), [
@@ -213,6 +253,17 @@ class AsetController extends Controller
             // Mencari aset berdasarkan ID
             $commodity = Commodity::findOrFail($id);
 
+            // If user is an officer, ensure they only delete assets from their own jurusan
+            $user = auth()->user();
+            if ($user && $user->isOfficer()) {
+                if (strtolower($commodity->jurusan) !== strtolower($user->jurusan)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized: Officers can only delete assets belonging to their own department (' . strtoupper($user->jurusan) . ').',
+                    ], 403);
+                }
+            }
+
             // Menghapus aset
             $commodity->delete();
 
@@ -242,15 +293,24 @@ class AsetController extends Controller
     {
         Log::info('AsetController::commodities started');
         try {
-            // Mengambil query parameter jurusan jika ada
-            $jurusan = $request->query('jurusan');
+            // Get authenticated user
+            $user = auth()->user();
 
-            // Jika jurusan disediakan, filter berdasarkan jurusan, jika tidak ambil semua
-            if ($jurusan) {
-                $commodities = Commodity::where('jurusan', $jurusan)->get();
+            // If user is an officer, force filter to their jurusan
+            if ($user && $user->isOfficer()) {
+                $jurusan = $user->jurusan;
             } else {
-                $commodities = Commodity::all();
+                // If not officer, use query parameter if provided
+                $jurusan = $request->query('jurusan');
             }
+
+            // Apply filtering logic
+            $query = Commodity::query();
+            if ($jurusan && strtolower($jurusan) !== 'all') {
+                $query->where('jurusan', $jurusan);
+            }
+            
+            $commodities = $query->get();
 
             // Tambahkan photo_url untuk setiap commodity
             $commodities = $commodities->map(function ($commodity) {

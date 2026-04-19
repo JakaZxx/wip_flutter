@@ -78,7 +78,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildSectionLabel('SUMMARY PESANAN'),
+                          _buildSectionLabel('RINGKASAN PESANAN'),
                           const SizedBox(height: 16),
                           ...provider.cartItems.map((item) => CheckoutItemCardPremium(
                             item: item,
@@ -132,7 +132,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
         centerTitle: true,
         title: Text(
-          'CHECKOUT',
+          'KERANJANG ASET',
           style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 18, color: Colors.white, letterSpacing: 2),
         ),
       ),
@@ -271,7 +271,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         child: provider.isLoading
             ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
             : Text(
-                'PLACE REQUEST',
+                'AJUKAN PINJAMAN',
                 style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 2.0),
               ),
       ),
@@ -405,7 +405,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               child: const Icon(Icons.check_rounded, size: 64, color: Colors.white),
             ),
             const SizedBox(height: 24),
-            Text('Request ID Sent!', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold)),
+            Text('Permintaan Dikirim!', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text('Permintaan Anda telah kami teruskan ke sistem verifikasi.', textAlign: TextAlign.center, style: GoogleFonts.poppins(color: const Color(0xFF64748B))),
             const SizedBox(height: 32),
@@ -469,8 +469,19 @@ class CheckoutItemCardPremium extends StatelessWidget {
             Container(
               width: 64,
               height: 64,
-              decoration: BoxDecoration(color: AppTheme.primaryBlue.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(16)),
-              child: const Center(child: Icon(Icons.inventory_2_rounded, color: AppTheme.primaryBlue, size: 28)),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryBlue.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(16),
+                image: item.fixedPhotoUrl != null
+                    ? DecorationImage(
+                        image: NetworkImage(item.fixedPhotoUrl!),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: item.fixedPhotoUrl == null
+                  ? const Center(child: Icon(Icons.inventory_2_rounded, color: AppTheme.primaryBlue, size: 28))
+                  : null,
             ),
             const SizedBox(width: 16),
             Expanded(

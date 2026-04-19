@@ -176,19 +176,21 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
     return Row(
       children: [
         Expanded(
-          child: _buildDropdown(
+          child: _buildModernDropdown(
             value: _selectedDeviceType,
-            hint: 'Device',
+            hint: 'DEVICE TYPE',
             items: _deviceTypes,
+            icon: FontAwesomeIcons.laptop,
             onChanged: (v) => setState(() => _selectedDeviceType = v),
           ),
         ),
         const SizedBox(width: 16),
         Expanded(
-          child: _buildDropdown(
+          child: _buildModernDropdown(
             value: _selectedBugType,
-            hint: 'Jenis Bug',
+            hint: 'BUG TYPE',
             items: _bugTypes,
+            icon: FontAwesomeIcons.bug,
             onChanged: (v) => setState(() => _selectedBugType = v),
           ),
         ),
@@ -196,22 +198,36 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
     );
   }
 
-  Widget _buildDropdown({String? value, required String hint, required List<String> items, required Function(String?) onChanged}) {
+  Widget _buildModernDropdown({String? value, required String hint, required List<String> items, required dynamic icon, required Function(String?) onChanged}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10)],
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 15, offset: const Offset(0, 5))],
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButtonFormField<String>(
-          value: value,
-          hint: Text(hint, style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF94A3B8))),
-          items: items.map((t) => DropdownMenuItem(value: t, child: Text(t.toUpperCase(), style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold)))).toList(),
+          key: ValueKey('dropdown_$value'),
+          initialValue: value,
+          icon: const Icon(Icons.expand_more_rounded, size: 18, color: Color(0xFF94A3B8)),
+          style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
+          hint: Row(
+            children: [
+              FaIcon(icon, size: 14, color: AppTheme.primaryBlue.withValues(alpha: 0.5)),
+              const SizedBox(width: 10),
+              Text(hint, style: GoogleFonts.outfit(fontSize: 10, color: const Color(0xFF94A3B8), fontWeight: FontWeight.w900, letterSpacing: 1)),
+            ],
+          ),
+          items: items.map((t) => DropdownMenuItem(
+            value: t, 
+            child: Text(t.toUpperCase(), style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 0.5))
+          )).toList(),
           onChanged: onChanged,
-          decoration: const InputDecoration(border: InputBorder.none),
-          validator: (v) => v == null ? 'Wajib' : null,
+          decoration: const InputDecoration(
+            border: InputBorder.none,
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          ),
+          validator: (v) => v == null ? 'Required' : null,
         ),
       ),
     );
