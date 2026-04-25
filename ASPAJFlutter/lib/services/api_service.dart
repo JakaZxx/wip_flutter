@@ -15,7 +15,7 @@ import '../models/dashboard_stats.dart';
 
 class ApiService {
   // Gunakan IP lokal komputer (192.168.1.11) agar bisa diakses dari HP
-  static const String _defaultIP = '192.168.1.7'; 
+  static const String _defaultIP = '192.168.1.11'; 
   
   static String get _effectiveHost {
     if (kIsWeb && Uri.base.host.isNotEmpty && Uri.base.host != 'localhost') {
